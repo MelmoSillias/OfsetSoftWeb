@@ -1,0 +1,111 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block stylesheets %}
+  <!-- Fonts (optionnel) -->
+  <link rel="stylesheet" href="{{ asset('assets/css/source-sans-3.css') }}">
+
+  <!-- OverlayScrollbars -->
+  <link rel="stylesheet" href="{{ asset('assets/css/overlayscrollbars.min.css') }}">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.min.css') }}">
+
+  <!-- AdminLTE -->
+  <link rel="stylesheet" href="{{ asset('AdminLte/css/adminlte.min.css') }}">
+
+  <!-- Bootstrap (pour compatibilité étendue) -->
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+{% endblock %}
+
+{% block body %}
+<body class="login-page bg-body-secondary">
+<div class="login-box">
+  <div class="card card-outline card-primary">
+    <div class="card-header">
+      <a href="#" class="link-dark text-center link-offset-2 link-opacity-100 link-opacity-50-hover">
+        <h1 class="mb-0"><b>Ofset</b>Soft</h1>
+      </a>
+    </div>
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Connectez-vous pour commencer</p>
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      {% endif %}
+
+      <form action="{{ path('app_login') }}" method="post">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <div class="input-group mb-1">
+          <div class="form-floating">
+            <input id="loginEmail" type="text" name="username" class="form-control" placeholder="" value="{{ last_username }}" required autofocus>
+            <label for="loginEmail">Nom d'utilisateur</label>
+          </div>
+          <div class="input-group-text"><span class="bi bi-envelope"></span></div>
+        </div>
+        <div class="input-group mb-1">
+          <div class="form-floating">
+            <input id="loginPassword" type="password" name="password" class="form-control" placeholder="" required>
+            <label for="loginPassword">Mot de passe</label>
+          </div>
+          <div class="input-group-text"><span class="bi bi-lock-fill"></span></div>
+        </div>
+
+        <div class="row">
+          <div class="col-8 d-inline-flex align-items-center">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="flexCheckDefault">
+              <label class="form-check-label" for="flexCheckDefault">Se souvenir de moi</label>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Connexion</button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {# <p class="mb-1"><a href="#">Mot de passe oublié ?</a></p>
+      <p class="mb-0"><a href="#" class="text-center">Créer un nouveau compte</a></p> #}
+    </div>
+  </div>
+</div>
+</body>
+{% endblock %}
+
+{% block javascripts %}
+  <!-- OverlayScrollbars -->
+  <script src="{{ asset('assets/js/overlayscrollbars.browser.es6.min.js') }}"></script>
+
+  <!-- Popper.js -->
+  <script src="{{ asset('assets/js/popper.min.js') }}"></script>
+
+  <!-- Bootstrap -->
+  <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
+
+  <!-- AdminLTE -->
+  <script src="{{ asset('AdminLte/js/adminlte.min.js') }}"></script>
+
+  <script>
+    const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
+    const Default = {
+      scrollbarTheme: 'os-theme-light',
+      scrollbarAutoHide: 'leave',
+      scrollbarClickScroll: true,
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+      if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
+        OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+          scrollbars: {
+            theme: Default.scrollbarTheme,
+            autoHide: Default.scrollbarAutoHide,
+            clickScroll: Default.scrollbarClickScroll,
+          },
+        });
+      }
+    });
+  </script>
+{% endblock %}

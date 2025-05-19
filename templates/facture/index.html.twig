@@ -1,0 +1,168 @@
+{% extends 'appbase.html.twig' %}
+{% block title %}Facture{% endblock %}
+
+{% block main %}
+<div class="container-fluid px-4">
+  <h3 class="mb-3 text-primary"><i class="bi bi-cash-register me-2"></i>Facture</h3>
+ 
+{# liste des factures #}
+<div class="card shadow">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong><i class="bi bi-table me-2"></i>Liste des Ventes</strong>
+    
+  </div>
+  <div class="card-body ">
+    <div class="card mb-3"> 
+        <div class="card-body">
+            <div class="d-flex gap-2 flex-wrap">
+                <input type="text" id="filtre-periode" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Période">
+                <input type="text" id="filtre-client" class="form-control form-control-sm" placeholder="Client" style="max-width: 180px;">
+                <button id="btn-filtrer-ventes" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-funnel"></i>
+                </button>
+                <button id="btnPrintVentes" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-printer"></i> Imprimer
+                </button>
+            </div>
+        </div>
+    </div> 
+    <div class="table-responsive">
+      <table id="ventesTable" class="table table-bordered w-100 align-middle">
+        <thead >
+          <tr>
+            <th>Date</th>
+            <th>Entreprise</th>
+            <th>Montant</th>
+            <th>Payé</th>
+            <th>Reliquat</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques -->
+ <div class="row mt-4 " id="venteStats">
+  <div class="col-md-3">
+    <div class="card bg-info text-center">
+      <div class="card-body">
+        <h6 class="text-muted">Nombre de facture</h6>
+        <h5><span id="stat-nb-total">--</span> ventes / <span id="stat-total">--</span> FCFA</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-warning text-white text-center">
+      <div class="card-body">
+        <h6>Factures Ofset</h6>
+        <h5><span id="stat-nb-ofset">--</span> / <span id="stat-ofset">--</span> FCFA</h5> 
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-danger text-dark text-center">
+      <div class="card-body">
+        <h6>Fcatures Gesta</h6>
+        <h5><span id="stat-nb-gesta">--</span> / <span id="stat-gesta">--</span> FCFA</h5>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-primary text-white text-center">
+      <div class="card-body">
+        <h6>Payé</h6>
+        <h5>Reçu : <span id="stat-recu">--</span> FCFA</h5>
+
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-success text-white text-center">
+      <div class="card-body">
+        <h6>Impayé</h6>
+        <h5>Reçu : <span id="stat-benef">--</span> FCFA</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong><i class="bi bi-cart-plus me-2"></i>Nouvelle Facture</strong>
+  </div>
+  <div class="card-body">
+    <form id="formVente"> 
+
+      <div id="alertAucuneLigne" class="alert alert-warning text-center" style="display:none;">
+        Aucune ligne, veuillez ajouter une ligne.
+      </div>
+      <!-- Lignes Produits -->
+      <div id="ligneProduits">
+        
+      </div>
+
+      <div class="d-flex justify-content-end mt-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="ajouterLigne">
+          <i class="bi bi-plus-circle me-1"></i> Ajouter un service
+        </button>
+      </div>
+
+      <hr>
+
+      <!-- Infos Paiement -->
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Client </label>
+          <input type="text" id="client" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Type de paiement</label>
+          <select id="type_paiement" class="form-select">
+            <option value="especes">Espèces</option>
+            <option value="credit">Crédit</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Montant payé</label>
+          <input type="number" id="montant_paye" class="form-control" step="0.01" min="0">
+        </div>
+        <div class="col-md-3 d-grid">
+          <label class="form-label invisible">Valider</label>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Valider</button>
+        </div>
+      </div>
+
+      <!-- Résumé -->
+      <div class="mt-4 rounded p-3 border shadow-sm" id="venteResume" style="display:none;">
+      <div class="row text-center">
+        <div class="col-md-4">
+          <h6>Total à payer</h6>
+          <span id="venteTotal" class="fw-bold text-success fs-5">0 FCFA</span>
+        </div>
+        <div class="col-md-4">
+          <h6>Reste à payer</h6>
+          <span id="venteReste" class="fw-bold text-danger fs-5">0 FCFA</span>
+        </div>
+        <div class="col-md-4">
+          <h6>Bénéfice estimé</h6>
+          <span id="venteBenefice" class="fw-bold text-primary fs-5">0 FCFA</span>
+        </div>
+      </div>
+    </div>
+
+
+    </form>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block javascripts %} 
+  <script src="{{ asset('assets/appjs/vente.js') }}"></script>
+{% endblock %}

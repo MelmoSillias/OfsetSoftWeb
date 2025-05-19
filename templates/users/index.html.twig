@@ -1,0 +1,141 @@
+{% extends 'appbase.html.twig' %}
+{% block title %}Gestion des Utilisateurs{% endblock %}
+
+{% block main %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Utilisateurs</h3>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddUser">
+      <i class="bi bi-person-plus"></i> Ajouter un utilisateur
+    </button>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <input type="text" id="searchUser" class="form-control" placeholder="Recherche nom/email...">
+    </div>
+    <div class="col-md-3">
+      <select id="filterRole" class="form-select">
+        <option value="">-- Rôle --</option>
+        <option value="ROLE_ADMIN">Admin</option>
+        <option value="ROLE_GUICHET">Guichet</option>
+        <option value="ROLE_STOCK">Stock</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="filterEtat" class="form-select">
+        <option value="">-- État --</option>
+        <option value="1">Actif</option>
+        <option value="0">Inactif</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table id="usersTable" class="table table-striped table-bordered w-100">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nom d'utilisateur</th>
+            <th>Nom Complet</th>
+            <th>Rôles</th>
+            <th>État</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# Modal Ajout Utilisateur #}
+<div class="modal fade" id="modalAddUser" tabindex="-1" aria-labelledby="modalAddUserLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content">
+      <form id="formAddUser">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAddUserLabel">Créer un nouvel utilisateur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="username" class="form-label">Nom d'utilisateur</label>
+            <input type="text" class="form-control" id="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="fullname" class="form-label">Nom Complet</label>
+            <input type="text" class="form-control" id="fullname" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Mot de passe</label>
+            <input type="password" class="form-control" id="password" required>
+          </div>
+          <div class="mb-3">
+            <label for="roles" class="form-label">Rôles</label>
+            <select class="form-select" id="roles" required>
+              <option value="">-- Sélectionnez --</option>
+              <option value="ROLE_ADMIN">Administrateur</option>
+              <option value="ROLE_GUICHET">Guichet</option>
+              <option value="ROLE_STOCK">Stock</option>
+            </select>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="etat" checked>
+            <label class="form-check-label" for="etat">Compte actif</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Modal Confirmation Suppression #}
+<div class="modal fade" id="modalDeleteUser" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <p>Confirmer la suppression de l’utilisateur ?</p>
+        <input type="hidden" id="deleteUserId">
+        <div class="d-flex justify-content-center gap-2">
+          <button class="btn btn-danger" id="confirmDeleteUser">Supprimer</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalUserRights" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <form id="formUserRights">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAddUserLabel">Droits Utilisateurs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-check">
+                    <label for="form-check-input" class="form-label">Factures</label>
+                    <input type="form-check-label" class="form-control" id="username">
+                </div> 
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Enregistrer</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ asset('assets/appjs/users.js') }}"></script>
+{% endblock %}

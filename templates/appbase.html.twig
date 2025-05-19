@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr" data-turbo-permanent>
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}StockifyWeb{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Stockify - Gestion de Stock Moderne">
+  <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+
+  {# --- CSS --- #}
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('AdminLte/css/adminlte.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/dataTables.bootstrap5.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/buttons.bootstrap5.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/daterangepicker.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/overlayscrollbars.min.css') }}">
+
+  {% block stylesheets %}{% endblock %}
+  <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
+  <script src="{{ asset('assets/js/turbo.min.js') }}" defer></script>
+
+  <style>
+      .brand-image{
+        max-height: 44px !important
+      }
+
+  </style>    
+
+  
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<div class="app-wrapper">
+
+  {# --- HEADER --- #}
+  <nav class="app-header navbar navbar-expand bg-body">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-lte-toggle="sidebar" href="#"><i class="bi bi-list"></i></a>
+        </li>
+        <li class="nav-item d-none d-md-block">
+          <a href="{{ path('app_dashboard') }}" class="nav-link">Accueil</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" data-lte-toggle="fullscreen" href="#">
+            <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
+            <i data-lte-icon="minimize" class="bi bi-fullscreen-exit d-none"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="toggleThemeBtn" title="Changer de thème">
+            <i class="bi bi-moon-fill" id="theme-icon"></i>
+          </a>
+        </li>
+        <li class="nav-item dropdown user-menu">
+          <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            <span class="d-none d-md-inline">{{ app.user.nomUtilisateur ?? 'Utilisateur' }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a href="#" class="dropdown-item">Profil</a></li>
+            <li><a href="{{ path('app_logout') }}" class="dropdown-item text-danger">Déconnexion</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  {# --- SIDEBAR --- #}
+  <aside class="app-sidebar bg-body-primary shadow" data-bs-theme="light">
+    <div class="sidebar-brand">
+      <a href="{{ path('app_dashboard') }}" class="brand-link">
+        <img src="{{ asset('assets/img/logo.png') }}" alt="Logo" class="brand-image opacity-90 h-96"> 
+      </a>
+    </div>
+
+    <div class="sidebar-wrapper">
+      <nav class="mt-2">
+        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
+
+          <li class="nav-item">
+            <a href="{{ path('app_dashboard') }}" class="nav-link {{ controller_name starts with 'Dashboard' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-house"></i><p>Tableau de bord</p>
+            </a>
+          </li>
+          
+          <hr>
+
+        {# <li class="nav-item">
+            <a href="{{ path('app_produit') }}" class="nav-link {{ controller_name starts with 'Produit' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-box-seam"></i><p>Produits</p>
+            </a>
+          </li> #}
+
+
+          {# <li class="nav-item">
+            <a href="{{ path('app_mouvement_stock') }}" class="nav-link {{ controller_name starts with 'Mouvement' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-arrow-left-right"></i><p>Mouvements de stock</p>
+            </a>
+          </li> #}
+
+
+          {# <li class="nav-item">
+            <a href="{{ path('app_vente') }}" class="nav-link {{ controller_name starts with 'Vente' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-cash-coin"></i><p>Guichet de vente</p>
+            </a>
+          </li> #}
+
+
+          {# <li class="nav-item">
+            <a href="{{ path('app_credit_client') }}" class="nav-link {{ controller_name starts with 'CreditClient' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-journal-minus"></i><p>Crédits clients</p>
+            </a>
+          </li> #}
+
+
+          {# <li class="nav-item">
+            <a href="{{ path('app_creance_fournisseur') }}" class="nav-link {{ controller_name starts with 'CreanceFournisseur' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-truck"></i><p>Créances fournisseurs</p>
+            </a>
+          </li> #}
+
+
+          {# <li class="nav-item">
+            <a href="{{ path('app_finance') }}" class="nav-link {{ controller_name starts with 'Finance' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-wallet2"></i><p>Finances</p>
+            </a>
+          </li> #}
+
+
+          <li class="nav-item">
+            <a href="{{ path('app_users') }}" class="nav-link {{ controller_name starts with 'Users' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-person-gear"></i><p>Utilisateurs</p>
+            </a>
+          </li>
+
+
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  {# --- MAIN --- #}
+  <main class="app-main">
+    <div class="app-content-header">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-end">
+              <li class="breadcrumb-item"><a href="{{ path('app_dashboard') }}">Accueil</a></li>
+              <li class="breadcrumb-item active">{% block page_subtitle %}{{ controller_name|replace({'Controller': ''}) }}{% endblock %}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-content">
+      <div class="container-fluid">
+        {% block main %}{% endblock %}
+      </div>
+    </div>
+  </main>
+
+  {# --- FOOTER --- #}
+  <footer class="app-footer text-center">
+    <div class="float-end d-none d-sm-inline">Stockify - Gestion de Stock Moderne</div>
+    <strong>&copy; {{ "now"|date("Y") }} <a href="#">Votre Entreprise</a>.</strong> Tous droits réservés.
+  </footer>
+</div>
+
+{# --- MODAL GÉNÉRIQUE --- #}
+<div class="modal fade" id="genericModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" id="genericModalDialog">
+    <div class="modal-content" id="genericModalContent">
+      <div class="modal-body text-center py-4">
+        <i id="genericModalIcon" class="fas fa-info-circle fa-3x mb-3"></i>
+        <h5 class="mb-0" id="genericModalMessage">Message ici</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# --- JS SCRIPTS --- #}
+<script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('AdminLte/js/adminlte.min.js') }}"></script>
+<script src="{{ asset('assets/js/moment.min.js') }}"></script>
+<script src="{{ asset('assets/js/daterangepicker.min.js') }}"></script>
+<script src="{{ asset('assets/js/overlayscrollbars.browser.es6.min.js') }}"></script>
+<script src="{{ asset('assets/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('assets/js/dataTables.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('assets/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('assets/js/buttons.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('assets/js/jszip.min.js') }}"></script>
+<script src="{{ asset('assets/js/pdfmake.min.js') }}"></script>
+<script src="{{ asset('assets/js/vfs_fonts.js') }}"></script>
+<script src="{{ asset('assets/js/buttons.html5.min.js') }}"></script>
+<script src="{{ asset('assets/js/buttons.print.min.js') }}"></script>
+<script src="{{ asset("/assets/js/apexcharts.min.js") }}"></script>
+
+<script>
+  function showToastModal({ message, type = 'info', icon, duration = 1500 } = {}) {
+    const $dialog = $('#genericModalDialog');
+    const $content = $('#genericModalContent');
+    const $iconEl = $('#genericModalIcon');
+    const $msgEl  = $('#genericModalMessage');
+
+    const bgClasses = {
+      success: 'bg-success text-white',
+      error:   'bg-danger  text-white',
+      warning: 'bg-warning text-dark',
+      info:    'bg-info    text-white'
+    };
+    $content
+      .removeClass('bg-success bg-danger bg-warning bg-info text-white text-dark')
+      .addClass(bgClasses[type] || bgClasses.info);
+
+    const iconClasses = {
+      success: 'fas fa-check-circle',
+      error:   'fas fa-times-circle',
+      warning: 'fas fa-exclamation-triangle',
+      info:    'fas fa-info-circle'
+    };
+    $iconEl.attr('class', (icon || iconClasses[type]) + ' fa-3x mb-3');
+    $msgEl.text(message);
+    $('#genericModal').modal('show');
+
+    if (duration > 0) {
+      setTimeout(() => $('#genericModal').modal('hide'), duration);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const sidebarWrapper = document.querySelector('.sidebar-wrapper');
+    if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
+      OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+        scrollbars: {
+          theme: 'os-theme-light',
+          autoHide: 'leave',
+          clickScroll: true
+        },
+      });
+    }
+  });
+</script>
+<script>
+  // Initialisation du thème depuis localStorage
+  document.addEventListener('DOMContentLoaded', function () {
+    const html = document.documentElement;
+    const icon = document.getElementById('theme-icon');
+    const currentTheme = localStorage.getItem('theme') || 'light';
+
+    html.setAttribute('data-bs-theme', currentTheme);
+    icon.className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+
+    // Toggle au clic
+    document.getElementById('toggleThemeBtn').addEventListener('click', function (e) {
+      e.preventDefault();
+      const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      icon.className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    });
+  });
+</script>
+    {% block javascripts %}
+			{% block importmap %}
+				{{ importmap('app') }}
+			{% endblock %}
+		{% endblock %}
+</body>
+</html>
