@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\AccountTransaction;
 use App\Entity\Client;
+use App\Entity\Commission;
 use App\Entity\Invoice;
 use App\Entity\InvoiceItem;
+use App\Repository\AccountTransactionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -77,7 +79,7 @@ final class FactureController extends AbstractController
             $qb->andWhere('i.client = :cid')->setParameter('cid',$cid);
         }
         if ($ref = $req->query->get('reference')) {
-            $qb->andWhere('i.id LIKE :ref')->setParameter('ref', "%$ref%");
+            $qb->andWhere('i.ref LIKE :ref')->setParameter('ref', "%$ref%");
         }
         if ($st = $req->query->get('status')) {
             $qb->andWhere('i.status = :st')->setParameter('st',$st);
@@ -100,72 +102,113 @@ final class FactureController extends AbstractController
         }
         return $this->json(['data'=>$data]);
     }
-
-    /**
-     * GET /api/invoice/{id}/items
-     * Détail des items d'une facture
-     */
-    #[Route('/api/invoice/{id}/items', name: 'invoice_items', methods: ['GET'])]
-    public function items(int $id, EntityManagerInterface $em): JsonResponse
+    
+     #[Route('/api/invoice/{id}/items', name: 'invoice_items', methods: ['GET'])]
+    public function invoiceItems(int $id, EntityManagerInterface $em): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
         if (!$inv) {
-            return $this->json(['error'=>'Facture introuvable'], 404);
+            return $this->json(['error'=>'Introuvable'],404);
         }
+        $items = $inv->getInvoiceItems();
         $out = [];
-        foreach ($inv->getItems() as $it) {
+        foreach ($items as $it) {
             $out[] = [
-                'description'=> $it->getDescription(),
+                'description'=> $it->getDescrib(),
                 'amount'     => $it->getAmount(),
                 'quantity'   => $it->getQuantity(),
             ];
         }
         return $this->json($out);
     }
-
     /**
      * POST /api/invoice/{id}/pay
      * Payload: { amount, useBalance, [paymentMethod], [paymentReference] }
      */
     #[Route('/api/invoice/{id}/pay', name: 'invoice_pay', methods: ['POST'])]
-    public function pay(int $id, Request $req, EntityManagerInterface $em): JsonResponse
+    public function pay(int $id, Request $req, EntityManagerInterface $em, AccountTransactionRepository $repo): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
         if (!$inv) {
             return $this->json(['error'=>'Facture introuvable'],404);
         }
-        $data = json_decode($req->getContent(), true);
-        if (!isset($data['amount'], $data['useBalance'])) {
-            return $this->json(['error'=>'Payload invalide'],400);
-        }
+
+        $data = json_decode($req->getContent(), true); 
+
         $amount     = (float)$data['amount'];
-        $useBalance = (bool)$data['useBalance'];
+        $useBalance = (isset($data['paymentMethod']) && $data['paymentMethod'] === 'compte') ? true : false;
 
         // 1. Appliquer sur la facture
         $remain = $inv->getRemain();
         if ($amount > $remain) {
             return $this->json(['error'=>'Montant > restant'],400);
         }
+
         $inv->setRemain($remain - $amount);
         if ($inv->getRemain() === 0.0) {
             $inv->setStatus('payé');
+        } else {
+            $inv->setStatus('partiellement payé');
         }
 
         // 2. Si useBalance on débite le solde client
         $client = $inv->getClient();
         if ($useBalance) {
-            $client->setBalance($client->getBalance() - $amount);
+
+             $lastTransaction = $em->getRepository(AccountTransaction::class)
+                ->findOneBy(['client' => $client], ['id' => 'DESC']);
+            $balance = $lastTransaction ? $lastTransaction->getBalanceValue() : 0;
+
+            $newBalance = $balance - $amount;
+
+            $ctx = new AccountTransaction();
+            $ctx->setInvoice($inv)  // présuppose relation Invoice dans Transaction
+            ->setIncome(0)
+            ->setOutcome($amount)
+            ->setAccountType('client')
+            ->setPaymentMethod('espèce')
+            ->setPaymentRef(uniqid('tx_', true))
+            ->setReason('Débit solde client')
+            ->setDescrib('Débit solde client pour paiement facture')
+            ->setClient($client)
+            ->setBalanceValue($newBalance)
+            ->setCreatedAt(new \DateTimeImmutable())
+            ->setStatus('validé');
+            $em->persist($ctx);
+        }
+
+        // Prendre la dernière transaction de type supplier pour ce client
+        $lastSupplierTx = $repo->findOneBy(
+            ['account_type' => 'supplier'],
+            ['id' => 'DESC']
+        );
+        
+        $balance_supplier = $lastSupplierTx ? $lastSupplierTx->getBalanceValue() : 0;
+        $newBalance_supplier = $balance_supplier + $amount;
+
+        if ($client->getType() === 'gesta' && $client->getCommittee() !== null && $client->getCommittee() !== '') {
+            $com = new Commission();
+
+            $com->setInvoice($inv) 
+                ->setAmount($amount * 10/100)
+                ->setCreatedAt(new \DateTimeImmutable())
+                ->setStatus('en attente');
+                
+            $em->persist($com);
         }
 
         // 3. Enregistrer la transaction
         $tx = new AccountTransaction();
-        $tx->setClient($client)
-           ->setInvoice($inv)  // présuppose relation Invoice dans Transaction
+        $tx->setInvoice($inv)  // présuppose relation Invoice dans Transaction
            ->setIncome($amount)
            ->setOutcome(0)
            ->setAccountType('supplier')
-           ->setPaymentMethod($useBalance ? 'solde' : $data['paymentMethod'] ?? 'inconnu')
+           ->setReason('Paiement de facture')
+            ->setDescrib('Paiement de facture #'.$inv->getRef())
+            ->setBalanceValue($newBalance_supplier)
+           ->setPaymentMethod($useBalance ? 'compte local' : $data['paymentMethod']) 
            ->setPaymentRef($data['paymentReference'] ?? '')
+           ->setStatus('en attente')
            ->setCreatedAt(new \DateTimeImmutable());
         $em->persist($tx);
 
@@ -239,6 +282,7 @@ final class FactureController extends AbstractController
                 ->setCreatedAt(new \DateTimeImmutable($data['createdAt']))
                 ->setAmount($data['amount'])
                 ->setRemain($data['amount'])
+                ->setRef(substr('F'.date('ymdHis').mt_rand(10,99), 0, 10))
                 ->setStatus($data['status']);
             $em->persist($inv);
 

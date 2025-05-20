@@ -31,6 +31,7 @@ class Commission
     private ?string $status = null;
 
     #[ORM\OneToOne(mappedBy: 'commission', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: true)]
     private ?AccountTransaction $accountTransaction = null;
 
     public function getId(): ?int

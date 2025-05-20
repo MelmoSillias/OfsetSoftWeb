@@ -56,6 +56,12 @@ class Invoice
     #[ORM\JoinColumn(nullable: false)]
     private ?Client $client = null;
 
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $month_str = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $ref = null;
+
     public function __construct()
     {
         $this->invoiceItems = new ArrayCollection();
@@ -239,6 +245,30 @@ class Invoice
     public function setClient(?Client $client): static
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    public function getMonthStr(): ?string
+    {
+        return $this->month_str;
+    }
+
+    public function setMonthStr(?string $month_str): static
+    {
+        $this->month_str = $month_str;
+
+        return $this;
+    }
+
+    public function getRef(): ?string
+    {
+        return $this->ref;
+    }
+
+    public function setRef(string $ref): static
+    {
+        $this->ref = $ref;
 
         return $this;
     }

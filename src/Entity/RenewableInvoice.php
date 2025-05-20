@@ -43,14 +43,14 @@ class RenewableInvoice
      * @var Collection<int, RenewableInvoiceItem>
      */
     #[ORM\OneToMany(targetEntity: RenewableInvoiceItem::class, mappedBy: 'renewableInvoice', orphanRemoval: true)]
-    private Collection $yes;
+    private Collection $items;
 
     #[ORM\Column]
     private ?int $period_val = null;
 
     public function __construct()
     {
-        $this->yes = new ArrayCollection();
+        $this->items = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -145,24 +145,24 @@ class RenewableInvoice
     /**
      * @return Collection<int, RenewableInvoiceItem>
      */
-    public function getYes(): Collection
+    public function getItems(): Collection
     {
-        return $this->yes;
+        return $this->items;
     }
 
-    public function addYe(RenewableInvoiceItem $ye): static
+    public function addItem(RenewableInvoiceItem $ye): static
     {
-        if (!$this->yes->contains($ye)) {
-            $this->yes->add($ye);
+        if (!$this->items->contains($ye)) {
+            $this->items->add($ye);
             $ye->setRenewableInvoice($this);
         }
 
         return $this;
     }
 
-    public function removeYe(RenewableInvoiceItem $ye): static
+    public function removeItem(RenewableInvoiceItem $ye): static
     {
-        if ($this->yes->removeElement($ye)) {
+        if ($this->items->removeElement($ye)) {
             // set the owning side to null (unless already changed)
             if ($ye->getRenewableInvoice() === $this) {
                 $ye->setRenewableInvoice(null);

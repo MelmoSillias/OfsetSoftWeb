@@ -212,10 +212,21 @@ final class ClientController extends AbstractController
         foreach ($repo->findBy(['client'=>$client]) as $rf) {
             $list[] = [
                 'id'       => $rf->getId(),
-                'period'   => $rf->getPeriod(),
-                'amount'   => $rf->getAmount(),
+                'period'   => match ($rf->getPeriodVal()) {
+                    1  => 'mensuel',
+                    3  => 'trimestriel',
+                    12 => 'annuel',
+                    default => $rf->getPeriodVal(),
+                },
+                // 'amount' égale à la somme des montants de ses lignes/items
+                'amount'   => array_sum(
+                    array_map(
+                        fn($item) => $item->getAmount() * $item->getQuantity(),
+                        $rf->getItems()->toArray()
+                    )
+                ),
                 'nextDate' => $rf->getNextDate()->format('Y-m-d'),
-                'status'   => $rf->getStatus(),
+                'status'   => $rf->getState(),
             ];
         }
         return $this->json($list);
@@ -224,7 +235,7 @@ final class ClientController extends AbstractController
     /**
      * Créer une nouvelle facture renouvelable pour le client
      */
-    #[Route('/api/client/{id}/renewable-facture', name: 'client_renewable_add', methods: ['POST'])]
+    #[Route('/api/client/{id}/addren', name: 'client_renewable_add', methods: ['POST'])]
     public function addRenewable(Client $client, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -232,13 +243,26 @@ final class ClientController extends AbstractController
             return $this->json(['error'=>'Payload invalide'], 400);
         }
 
+        $periodMap = [
+            'mensuel' => 1,
+            'trimestriel' => 3,
+            'annuel' => 12,
+        ];
+
+        if (!isset($data['period']) || !isset($periodMap[$data['period']])) {
+            return $this->json(['error' => 'Période invalide'], 400);
+        }
+        $period = $periodMap[$data['period']];
+ 
+
         try {
             $rf = new RenewableInvoice();
             $rf->setClient($client)
-               ->setPeriodVal($data['period'])
+               ->setPeriodVal($period) 
+               ->setCreatedAt(new \DateTimeImmutable())
                ->setStartAt(new \DateTimeImmutable($data['startDate'])) 
                ->setState('active')
-               ->setNextDate(new \DateTimeImmutable($data['startDate'])); // initial
+               ->setNextDate(new \DateTimeImmutable($data['nextDate'])); // initial
 
             $em->persist($rf);
             // Items
@@ -273,6 +297,49 @@ final class ClientController extends AbstractController
         return $this->json(['success'=>true]);
     }
 
+    #[Route('/api/renewable-facture/{id}', name: 'renewable_details', methods: ['GET'])]
+    public function getRenewableDetails(int $id, EntityManagerInterface $em): JsonResponse
+    {
+        $rf = $em->getRepository(RenewableInvoice::class)->find($id);
+        if (!$rf) {
+            return $this->json(['error' => 'Introuvable'], 404);
+        }
+
+        $items = [];
+        foreach ($rf->getItems() as $item) {
+            $items[] = [
+                'id'          => $item->getId(),
+                'description' => $item->getDescrib(),
+                'amount'      => $item->getAmount(),
+                'quantity'    => $item->getQuantity(),
+            ];
+        }
+
+        $data = [
+            'id'        => $rf->getId(),
+            'clientId'  => $rf->getClient()->getId(),
+            'period'    => match ($rf->getPeriodVal()) {
+                    1  => 'mensuel',
+                    3  => 'trimestriel',
+                    12 => 'annuel',
+                    default => $rf->getPeriodVal(),
+                },
+            'amount'    => array_sum(
+                array_map(
+                    fn($item) => $item->getAmount() * $item->getQuantity(),
+                    $rf->getItems()->toArray()
+                )
+            ),
+            'state'     => $rf->getState(),
+            'startAt'   => $rf->getStartAt()?->format('Y-m-d'),
+            'nextDate'  => $rf->getNextDate()?->format('Y-m-d'),
+            'createdAt' => $rf->getCreatedAt()?->format('Y-m-d'),
+            'items'     => $items,
+        ];
+
+        return $this->json($data);
+    }
+
     /**
      * Liste des factures ponctuelles du client (+ filtres)
      */
@@ -290,11 +357,11 @@ final class ClientController extends AbstractController
         }
         if ($from = $request->query->get('from')) {
             $qb->andWhere('i.createdAt >= :from')
-               ->setParameter('from', new \DateTime($from));
+               ->setParameter('from', new \DateTimeImmutable($from));
         }
         if ($to = $request->query->get('to')) {
             $qb->andWhere('i.createdAt <= :to')
-               ->setParameter('to', new \DateTime($to));
+               ->setParameter('to', new \DateTimeImmutable($to));
         }
 
         $list = [];
@@ -312,28 +379,6 @@ final class ClientController extends AbstractController
     }
 
     /**
-     * Liste des items d'une facture
-     */
-    #[Route('/api/invoice/{id}/items', name: 'invoice_items', methods: ['GET'])]
-    public function invoiceItems(int $id, EntityManagerInterface $em): JsonResponse
-    {
-        $inv = $em->getRepository(Invoice::class)->find($id);
-        if (!$inv) {
-            return $this->json(['error'=>'Introuvable'],404);
-        }
-        $items = $em->getRepository(InvoiceItem::class)->findBy(['facture'=>$inv]);
-        $out = [];
-        foreach ($items as $it) {
-            $out[] = [
-                'description'=> $it->getDescription(),
-                'amount'     => $it->getAmount(),
-                'quantity'   => $it->getQuantity(),
-            ];
-        }
-        return $this->json($out);
-    }
-
-    /**
      * Créer une facture ponctuelle pour le client
      */
     #[Route('/api/client/{id}/invoice', name: 'client_invoice_add', methods: ['POST'])]
@@ -347,9 +392,10 @@ final class ClientController extends AbstractController
             $inv = new Invoice();
             $inv->setClient($client)
                 ->setCreatedAt(new \DateTimeImmutable($data['createdAt']))
-                ->setUpdatedAt(new \DateTimeImmutable())
                 ->setAmount($data['amount'])
                 ->setRemain($data['amount'])
+                ->setUser($this->getUser())
+                ->setMonthStr($data['month_str'])
                 ->setStatus($data['status']);
 
             $em->persist($inv);

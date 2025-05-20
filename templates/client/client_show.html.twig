@@ -244,19 +244,16 @@
             <div class="col-md-4 mb-3">
               <label>Date</label>
               <input type="date" name="createdAt" class="form-control" required>
-            </div>
+            </div> 
             <div class="col-md-4 mb-3">
-              <label>Statut</label>
-              <select name="status" class="form-select" required>
-                <option value="en cours">En cours</option>
-                <option value="payé">Payé</option>
-                <option value="annulé">Annulé</option>
+              <label>Mois</label>
+              <select type="text" name="month_str" class="form-select form-control" required>
+                <option value=""> -- Sélectionner -- </option>
+                {% for month in ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'] %}
+                  <option value="{{ month }}">{{ month }}</option>
+                {% endfor %}
               </select>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label>Montant total</label>
-              <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
-            </div>
+           </div>
           </div>
           <hr>
           <h6>Éléments de la facture</h6>
@@ -285,6 +282,102 @@
           <button type="submit" class="btn btn-primary">Créer</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+{# Modal Paiement Facture #}
+<div class="modal fade" id="modalInvoicePayment" tabindex="-1" aria-hidden="true" data-id='' data-remain="0">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-invoice-payment">
+        <div class="modal-header">
+          <h5 class="modal-title">Paiement de la Facture</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2 text-end">
+            <h5 class="text-primary">Solde compte local : <span id="soldeCompteLocal">--</span></h5>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label"><strong>Montant à payer</strong></label>
+            <input type="number" name="amount" class="form-control" id="paymentAmount" min="0" step="0.01" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"><strong>Mode de paiement</strong></label>
+            <select name="paymentMethod" class="form-select" required>
+              <option value=""> -- Sélectionner -- </option>
+              <option value="compte">Compte local</option>
+              <option value="Espèces">Espèces</option>
+              <option value="chèque">Chèque</option>
+              <option value="virement">Virement</option> 
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Référence (optionnel)</strong></label>
+            <input type="text" name="reference" class="form-control" placeholder="Référence du paiement">
+          </div>
+          <div class="mb-2 text-end">
+            <small class="text-muted">Montant restant à payer : <span id="remainingAmount">--</span> FCFA</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Valider le paiement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Modal Détails Facture Renouvelable #}
+<div class="modal fade" id="modalRenewableDetails" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Détails de la Facture Renouvelable</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label"><strong>Période :</strong></label>
+            <input type="text" class="form-control" id="renewableDetailsPeriod" disabled>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><strong>Date de début :</strong></label>
+            <input type="text" class="form-control" id="renewableDetailsStartDate" disabled>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><strong>Statut :</strong></label>
+            <input type="text" class="form-control" id="renewableDetailsStatus" disabled>
+          </div>
+        </div>
+        <hr>
+        <h6>Éléments de la facture</h6>
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Montant</th>
+              <th>Quantité</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="renewableDetailsItems">
+            {# Les lignes seront injectées en JS #}
+          </tbody>
+        </table>
+        <div class="text-end">
+          <strong>Total :</strong>
+          <span id="renewableDetailsTotal">--</span> FCFA
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
     </div>
   </div>
 </div>
