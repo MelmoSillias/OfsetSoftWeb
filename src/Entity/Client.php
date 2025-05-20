@@ -32,13 +32,7 @@ class Client
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $committee = null;
-
-    /**
-     * @var Collection<int, Invoice>
-     */
-    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'client', orphanRemoval: true)]
-    private Collection $yes;
-
+ 
     /**
      * @var Collection<int, AccountTransaction>
      */
@@ -54,11 +48,17 @@ class Client
     #[ORM\Column]
     private ?bool $is_active = null;
 
+    /**
+     * @var Collection<int, Invoice>
+     */
+    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'client', orphanRemoval: true)]
+    private Collection $invoices;
+
     public function __construct()
-    {
-        $this->yes = new ArrayCollection();
+    { 
         $this->accountTransactions = new ArrayCollection();
         $this->renewableInvoices = new ArrayCollection();
+        $this->invoices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -138,36 +138,7 @@ class Client
         return $this;
     }
 
-    /**
-     * @return Collection<int, Invoice>
-     */
-    public function getYes(): Collection
-    {
-        return $this->yes;
-    }
-
-    public function addYe(Invoice $ye): static
-    {
-        if (!$this->yes->contains($ye)) {
-            $this->yes->add($ye);
-            $ye->setClient($this);
-        }
-
-        return $this;
-    }
-
-    public function removeYe(Invoice $ye): static
-    {
-        if ($this->yes->removeElement($ye)) {
-            // set the owning side to null (unless already changed)
-            if ($ye->getClient() === $this) {
-                $ye->setClient(null);
-            }
-        }
-
-        return $this;
-    }
-
+     
     /**
      * @return Collection<int, AccountTransaction>
      */
@@ -236,6 +207,36 @@ class Client
     public function setIsActive(bool $is_active): static
     {
         $this->is_active = $is_active;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Invoice>
+     */
+    public function getInvoices(): Collection
+    {
+        return $this->invoices;
+    }
+
+    public function addInvoice(Invoice $invoice): static
+    {
+        if (!$this->invoices->contains($invoice)) {
+            $this->invoices->add($invoice);
+            $invoice->setClient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvoice(Invoice $invoice): static
+    {
+        if ($this->invoices->removeElement($invoice)) {
+            // set the owning side to null (unless already changed)
+            if ($invoice->getClient() === $this) {
+                $invoice->setClient(null);
+            }
+        }
 
         return $this;
     }

@@ -24,6 +24,7 @@ class RenewableInvoice
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[ORM\JoinColumn(nullable: true)]
     private ?\DateTimeImmutable $updateAt = null;
 
     #[ORM\Column(nullable: true)]

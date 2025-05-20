@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\AccountTransactionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
 
 #[ORM\Entity(repositoryClass: AccountTransactionRepository::class)]
 class AccountTransaction
@@ -18,6 +19,7 @@ class AccountTransaction
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[JoinColumn(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]

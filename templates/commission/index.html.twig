@@ -1,0 +1,137 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Gestion des Commissions{% endblock %}
+
+{% block main %}
+<div class="container-fluid">
+
+  {# --- 1. En-tête & Boutons d’export --- #}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Commissions</h3>
+    <div>
+      <button id="btnPrintList" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-printer"></i> Imprimer la liste
+      </button>
+      <button id="btnExportExcel" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+      </button>
+      <button id="btnExportPDF" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+
+  {# --- 2. Filtres --- #}
+  <div class="row g-2 mb-4">
+    <div class="col-md-3">
+      <input type="text" id="filterClientName" class="form-control" placeholder="Client">
+    </div>
+    <div class="col-md-3">
+      <input type="text" id="filterCommittee" class="form-control" placeholder="Commissionnaire">
+    </div>
+    <div class="col-md-4">
+      <input type="text" id="filterPeriod" class="form-control" placeholder="Période">
+    </div>
+    <div class="col-md-2 text-end">
+      <button id="btnClearFilters" class="btn btn-sm btn-secondary">
+        <i class="bi bi-x-circle"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  {# --- 3. Tableau des commissions --- #}
+  <div class="card">
+    <div class="card-body">
+      <table id="commissionsTable" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Client</th>
+            <th>Commissionnaire</th>
+            <th>Montant</th>
+            <th>Pénalité</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{# --- 4. Modals --- #}
+
+{# 4a. Modal « Prendre la commission » #}
+<div class="modal fade" id="modalTakeCommission" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-take-commission">
+        <div class="modal-header">
+          <h5 class="modal-title">Prendre la Commission</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="commissionId" name="commissionId">
+          <div class="mb-3">
+            <label>Montant à prélever</label>
+            <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label>Pénalité (si applicable)</label>
+            <input type="number" name="penalty" class="form-control" min="0" step="0.01">
+          </div>
+          <div class="mb-3">
+            <label>Justification (optionnelle)</label>
+            <textarea name="reason" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-success">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# 4b. Modal « Infos Facture » #}
+<div class="modal fade" id="modalInvoiceInfo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Détails de la Facture</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+          <dt class="col-sm-3">Référence</dt><dd class="col-sm-9" id="info-reference"></dd>
+          <dt class="col-sm-3">Date</dt><dd class="col-sm-9" id="info-date"></dd>
+          <dt class="col-sm-3">Montant total</dt><dd class="col-sm-9" id="info-amount"></dd>
+          <dt class="col-sm-3">Reste à payer</dt><dd class="col-sm-9" id="info-remain"></dd>
+          <dt class="col-sm-3">Statut</dt><dd class="col-sm-9" id="info-status"></dd>
+        </dl>
+        <h6>Articles</h6>
+        <table class="table">
+          <thead>
+            <tr><th>Description</th><th>Montant</th><th>Qté</th></tr>
+          </thead>
+          <tbody id="info-items"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+        <button id="btnPrintReceipt" type="button" class="btn btn-primary">
+          <i class="bi bi-printer"></i> Imprimer reçu
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+  <script src="{{ asset('assets/appjs/commission.js') }}"></script>
+{% endblock %}

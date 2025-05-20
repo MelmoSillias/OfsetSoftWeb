@@ -49,26 +49,26 @@
   
   {# --- Stats --- #}
   <div class="row mb-4" id="clientInfoStats">
-    <div class="col-md-3 col-sm-6">
+    <div class="col-lg-3 col-md-6">
       <div class="info-box mb-3">
         <span class="info-box-icon bg-info"><i class="bi bi-cash-stack"></i></span>
         <div class="info-box-content">
-      <span class="info-box-text text-dark dark-mode-text-white">Solde</span>
-      <span class="info-box-number text-dark dark-mode-text-white">-- FCFA</span>
+      <span class="info-box-text">Solde</span>
+      <span class="info-box-number">-- FCFA</span>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="info-box mb-3 col-sm-6">
+    <div class="col-lg-3 col-md-6">
+      <div class="info-box mb-3">
         <span class="info-box-icon bg-primary"><i class="bi bi-receipt"></i></span>
         <div class="info-box-content">
-      <span class="info-box-text text-dark dark-mode-text-white">Factures totales</span>
-      <span class="info-box-number text-dark dark-mode-text-white">--</span>
+      <span class="info-box-text">Factures totales</span>
+      <span class="info-box-number">--</span>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="info-box mb-3 col-sm-6">
+    <div class="col-lg-3 col-md-6">
+      <div class="info-box mb-3">
         <span class="info-box-icon bg-warning"><i class="bi bi-exclamation-octagon"></i></span>
         <div class="info-box-content">
       <span class="info-box-text text-dark">Impayées</span>
@@ -76,11 +76,11 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="info-box mb-3 col-sm-6">
+    <div class="col-lg-3 col-md-6">
+      <div class="info-box mb-3">
         <span class="info-box-icon bg-success"><i class="bi bi-arrow-repeat"></i></span>
         <div class="info-box-content">
-      <span class="info-box-text text-dark dark-mode-text-white">Renouvelables actives</span>
+      <span class="info-box-text text-dark dark-mode-text-white">Renouvelables</span>
       <span class="info-box-number text-dark dark-mode-text-white">--</span>
         </div>
       </div>
@@ -122,7 +122,7 @@
           </select>
         </div>
       </div>
-      <table id="invoicesTable" class="table table-bordered table-hover">
+      <table id="invoicesTable" class="table table-bordered table-hover table-striped border-top border-bottom">
         <thead>
           <tr>
             <th>Référence</th>
@@ -152,7 +152,7 @@
       </div>
     </div>
     <div class="card-body">
-      <table id="transactionsTable" class="table table-bordered table-hover">
+      <table id="transactionsTable" class="table table-bordered table-hover table-striped border-top border-bottom">
         <thead>
           <tr>
             <th>Date</th>
@@ -193,18 +193,10 @@
             </div>
             <div class="col-md-4 mb-3">
               <label>Date de début</label>
-              <input type="date" name="startDate" class="form-control" required>
+                <input type="date" name="startDate" class="form-control" required min="{{ (date('tomorrow'))|date('Y-m-d') }}">
             </div>
-            <div class="col-md-4 mb-3">
-              <label>Montant</label>
-              <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label>Statut</label>
-              <select name="status" class="form-select" required>
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
-              </select>
+            
+            <div class="col-md-4 mb-3"> 
             </div>
           </div>
           <hr>
@@ -220,8 +212,8 @@
               <div class="col-md-2">
                 <input type="number" name="items[0][quantity]" class="form-control" placeholder="Qté" min="1" required>
               </div>
-              <div class="col-md-2 text-end">
-                <button type="button" class="btn btn-sm btn-danger btn-remove-line">&times;</button>
+              <div class="col-md-2 text-end d">
+                <button type="button" class="btn btn-sm btn-danger btn-remove-line"><i class="bi bi-trash"></i></button>
               </div>
             </div>
           </div>
@@ -280,7 +272,7 @@
                 <input type="number" name="items[0][quantity]" class="form-control" placeholder="Qté" min="1" required>
               </div>
               <div class="col-md-2 text-end">
-                <button type="button" class="btn btn-sm btn-danger btn-remove-line">&times;</button>
+                <button type="button" class="btn btn-sm btn-danger btn-remove-line"><i class="bi bi-trash"></i></button>
               </div>
             </div>
           </div>

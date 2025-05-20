@@ -16,10 +16,6 @@ class Invoice
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'yes')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Client $client = null;
-
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -56,6 +52,10 @@ class Invoice
     #[ORM\OneToMany(targetEntity: AccountTransaction::class, mappedBy: 'invoice')]
     private Collection $accountTransactions;
 
+    #[ORM\ManyToOne(inversedBy: 'invoices')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Client $client = null;
+
     public function __construct()
     {
         $this->invoiceItems = new ArrayCollection();
@@ -67,18 +67,7 @@ class Invoice
     {
         return $this->id;
     }
-
-    public function getClient(): ?Client
-    {
-        return $this->client;
-    }
-
-    public function setClient(?Client $client): static
-    {
-        $this->client = $client;
-
-        return $this;
-    }
+    
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
@@ -238,6 +227,18 @@ class Invoice
                 $accountTransaction->setInvoice(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getClient(): ?Client
+    {
+        return $this->client;
+    }
+
+    public function setClient(?Client $client): static
+    {
+        $this->client = $client;
 
         return $this;
     }

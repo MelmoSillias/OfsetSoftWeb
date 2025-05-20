@@ -27,16 +27,20 @@ final class FactureController extends AbstractController
      * GET /api/invoices/stats
      * Retourne : total, intern, gesta, unpaid, recent
      */
-    #[Route('/invoices/stats', name: 'invoices_stats', methods: ['GET'])]
+    #[Route('/api/invoices/stats', name: 'invoices_stats', methods: ['GET'])]
     public function stats(EntityManagerInterface $em): JsonResponse
     {
         $invRepo = $em->getRepository(Invoice::class);
         $total     = $invRepo->count([]);
-        $intern    = $invRepo->count(['clientType' => 'intern']);
-        $gesta     = $invRepo->count(['clientType' => 'gesta']);
+        $intern = (int) $em->createQuery('SELECT COUNT(i.id) FROM App\Entity\Invoice i JOIN i.client c WHERE c.type = :type')
+            ->setParameter('type', 'intern')
+            ->getSingleScalarResult();
+        $gesta = (int) $em->createQuery('SELECT COUNT(i.id) FROM App\Entity\Invoice i JOIN i.client c WHERE c.type = :type')
+            ->setParameter('type', 'gesta')
+            ->getSingleScalarResult();
         $unpaid    = $invRepo->count(['status' => 'en cours']);
         $thirtyAgo = new \DateTime('-30 days');
-        $recent    = $invRepo->createQueryBuilder('i')
+        $recent    = (int) $invRepo->createQueryBuilder('i')
             ->select('count(i.id)')
             ->where('i.createdAt >= :since')
             ->setParameter('since', $thirtyAgo)
@@ -46,25 +50,13 @@ final class FactureController extends AbstractController
         return $this->json(compact('total','intern','gesta','unpaid','recent'));
     }
 
-    /**
-     * GET /api/clients
-     * Liste simple de tous les clients (id, companyName)
-     */
-    #[Route('/clients', name: 'clients_list', methods: ['GET'])]
-    public function clients(EntityManagerInterface $em): JsonResponse
-    {
-        $data = [];
-        foreach ($em->getRepository(Client::class)->findAll() as $c) {
-            $data[] = ['id'=>$c->getId(), 'companyName'=>$c->getCompanyName()];
-        }
-        return $this->json(['data'=>$data]);
-    }
+    
 
     /**
      * GET /api/invoices
      * Liste des factures avec filtres : from,to,clientType,clientId,reference,status
      */
-    #[Route('/invoices', name: 'invoices_list', methods: ['GET'])]
+    #[Route('/api/invoices', name: 'invoices_list', methods: ['GET'])]
     public function listInvoices(Request $req, EntityManagerInterface $em): JsonResponse
     {
         $qb = $em->getRepository(Invoice::class)
@@ -79,7 +71,7 @@ final class FactureController extends AbstractController
             $qb->andWhere('i.createdAt <= :to')->setParameter('to', new \DateTime($to));
         }
         if ($ct = $req->query->get('clientType')) {
-            $qb->andWhere('i.clientType = :ct')->setParameter('ct',$ct);
+            $qb->andWhere('c.type = :ct')->setParameter('ct', $ct);
         }
         if ($cid = $req->query->get('clientId')) {
             $qb->andWhere('i.client = :cid')->setParameter('cid',$cid);
@@ -113,7 +105,7 @@ final class FactureController extends AbstractController
      * GET /api/invoice/{id}/items
      * Détail des items d'une facture
      */
-    #[Route('/invoice/{id}/items', name: 'invoice_items', methods: ['GET'])]
+    #[Route('/api/invoice/{id}/items', name: 'invoice_items', methods: ['GET'])]
     public function items(int $id, EntityManagerInterface $em): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
@@ -135,7 +127,7 @@ final class FactureController extends AbstractController
      * POST /api/invoice/{id}/pay
      * Payload: { amount, useBalance, [paymentMethod], [paymentReference] }
      */
-    #[Route('/invoice/{id}/pay', name: 'invoice_pay', methods: ['POST'])]
+    #[Route('/api/invoice/{id}/pay', name: 'invoice_pay', methods: ['POST'])]
     public function pay(int $id, Request $req, EntityManagerInterface $em): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
@@ -185,7 +177,7 @@ final class FactureController extends AbstractController
      * POST /api/invoice/{id}/cancel
      * Payload: { reason }
      */
-    #[Route('/invoice/{id}/cancel', name: 'invoice_cancel', methods: ['POST'])]
+    #[Route('/api/invoice/{id}/cancel', name: 'invoice_cancel', methods: ['POST'])]
     public function cancel(int $id, Request $req, EntityManagerInterface $em): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
@@ -206,7 +198,7 @@ final class FactureController extends AbstractController
      * GET /api/invoice/{id}/transactions
      * Historique des paiements d'une facture
      */
-    #[Route('/invoice/{id}/transactions', name: 'invoice_transactions', methods: ['GET'])]
+    #[Route('/api/invoice/{id}/transactions', name: 'invoice_transactions', methods: ['GET'])]
     public function transactions(int $id, EntityManagerInterface $em): JsonResponse
     {
         $inv = $em->getRepository(Invoice::class)->find($id);
@@ -230,7 +222,7 @@ final class FactureController extends AbstractController
      * Création d'une facture avec items
      * Payload: { createdAt, clientId, status, amount, items: [...] }
      */
-    #[Route('/invoice/add', name: 'invoice_add', methods: ['POST'])]
+    #[Route('/api/invoice/add', name: 'invoice_add', methods: ['POST'])]
     public function add(Request $req, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($req->getContent(), true);

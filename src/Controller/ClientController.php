@@ -33,7 +33,7 @@ final class ClientController extends AbstractController
     {
         // Récupération des champs
         $client->setCompanyName($request->request->get('companyName'))
-               ->setDelegate($request->request->get('delagate'))
+               ->setDelegate($request->request->get('delegate'))
                ->setPhoneNumber($request->request->get('phoneNumber'))
                ->setAddress($request->request->get('address'))
                ->setType($request->request->get('type'))
@@ -117,13 +117,12 @@ final class ClientController extends AbstractController
         $data = [];
 
         foreach ($clients as $client) {
-            // Calcul du solde : somme des relances sur toutes les factures « en cours »
-            $invoices = $em->getRepository(Invoice::class)
-                           ->findBy(['client' => $client, 'status' => 'en cours']);
-            $balance = 0;
-            foreach ($invoices as $inv) {
-                $balance += $inv->getRemain();
-            }
+    
+            // Récupérer le solde (balance_value) de la dernière transaction du client
+            $lastTransaction = $em->getRepository(AccountTransaction::class)
+                ->findOneBy(['client' => $client], ['id' => 'DESC']);
+            $balance = $lastTransaction ? $lastTransaction->getBalanceValue() : 0;
+            
 
             $data[] = [
                 'id'           => $client->getId(),
@@ -186,11 +185,9 @@ final class ClientController extends AbstractController
         $totalInvoices = count($allInvoices);
         $unpaidInvoices= count($invoiceRepo->findBy(['client'=>$client, 'status'=>'en cours']));
 
-        // Solde = somme des restent à payer
-        $balance = 0;
-        foreach ($allInvoices as $inv) {
-            $balance += $inv->getRemain();
-        }
+        $lastTransaction = $em->getRepository(AccountTransaction::class)
+                ->findOneBy(['client' => $client], ['id' => 'DESC']);
+            $balance = $lastTransaction ? $lastTransaction->getBalanceValue() : 0;
 
         // Renouvelables actives
         $renewRepo = $em->getRepository(RenewableInvoice::class);
