@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ asset('AdminLte/css/adminlte.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.min.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/css/dataTables.bootstrap5.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/datatables.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/buttons.bootstrap5.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/daterangepicker.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/overlayscrollbars.min.css') }}">
@@ -23,7 +23,56 @@
   <style>
       .brand-image{
         max-height: 44px !important
-      }
+      } 
+  .small-box {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 1.5rem;
+  }
+
+  .small-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .small-box .inner {
+    padding: 1.5rem;
+  }
+
+  .small-box .inner h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .small-box .inner p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .small-box .icon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-size: 3rem;
+    opacity: 0.2;
+  }
+
+  .small-box .small-box-footer {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+    display: block;
+    text-align: center;
+  }
+
+  .small-box .small-box-footer:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 1);
+  } 
 
   </style>    
 
@@ -60,7 +109,7 @@
         <li class="nav-item dropdown user-menu">
           <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i>
-            <span class="d-none d-md-inline">{{ app.user.nomUtilisateur ?? 'Utilisateur' }}</span>
+            <span class="d-none d-md-inline">{{ app.user.username ?? 'Utilisateur' }}</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a href="#" class="dropdown-item">Profil</a></li>
@@ -126,11 +175,11 @@
           </li> #}
 
 
-          {# <li class="nav-item">
-            <a href="{{ path('app_finance') }}" class="nav-link {{ controller_name starts with 'Finance' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-wallet2"></i><p>Finances</p>
+          <li class="nav-item">
+            <a href="{{ path('app_client') }}" class="nav-link {{ controller_name starts with 'Client' ? 'active' : '' }}">
+              <i class="nav-icon bi bi-people"></i><p>Client</p>
             </a>
-          </li> #}
+          </li> 
 
 
           <li class="nav-item">
@@ -193,8 +242,7 @@
 <script src="{{ asset('assets/js/daterangepicker.min.js') }}"></script>
 <script src="{{ asset('assets/js/overlayscrollbars.browser.es6.min.js') }}"></script>
 <script src="{{ asset('assets/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('assets/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('assets/js/datatables.min.js') }}"></script> 
 <script src="{{ asset('assets/js/buttons.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/jszip.min.js') }}"></script>
 <script src="{{ asset('assets/js/pdfmake.min.js') }}"></script>
@@ -250,22 +298,39 @@
 </script>
 <script>
   // Initialisation du thème depuis localStorage
-  document.addEventListener('DOMContentLoaded', function () {
+ document.addEventListener('DOMContentLoaded', function () {
     const html = document.documentElement;
     const icon = document.getElementById('theme-icon');
     const currentTheme = localStorage.getItem('theme') || 'light';
 
+    // Set the initial theme
     html.setAttribute('data-bs-theme', currentTheme);
     icon.className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    toggleTextClasses(currentTheme);
 
-    // Toggle au clic
+    // Toggle theme on button click
     document.getElementById('toggleThemeBtn').addEventListener('click', function (e) {
-      e.preventDefault();
-      const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      icon.className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        e.preventDefault();
+        const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        icon.className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        toggleTextClasses(newTheme);
     });
+
+    // Function to toggle text classes based on the theme
+    function toggleTextClasses(theme) {
+        const elements = document.querySelectorAll('.text-dark, .text-white');
+        elements.forEach(element => {
+            if (theme === 'dark') {
+                element.classList.remove('text-dark');
+                element.classList.add('text-white');
+            } else {
+                element.classList.remove('text-white');
+                element.classList.add('text-dark');
+            }
+        });
+    }  
   });
 </script>
     {% block javascripts %}

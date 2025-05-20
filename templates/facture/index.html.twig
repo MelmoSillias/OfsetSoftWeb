@@ -1,40 +1,67 @@
 {% extends 'appbase.html.twig' %}
-{% block title %}Facture{% endblock %}
+
+{% block title %}Gestion des Factures{% endblock %}
 
 {% block main %}
-<div class="container-fluid px-4">
-  <h3 class="mb-3 text-primary"><i class="bi bi-cash-register me-2"></i>Facture</h3>
- 
-{# liste des factures #}
-<div class="card shadow">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <strong><i class="bi bi-table me-2"></i>Liste des Ventes</strong>
-    
+<div class="container-fluid">
+
+  {# --- 1. Statistiques Factures --- #}
+  <div class="row mb-4" id="invoiceStats">
+    {# Injecté par AJAX via JS #}
   </div>
-  <div class="card-body ">
-    <div class="card mb-3"> 
-        <div class="card-body">
-            <div class="d-flex gap-2 flex-wrap">
-                <input type="text" id="filtre-periode" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Période">
-                <input type="text" id="filtre-client" class="form-control form-control-sm" placeholder="Client" style="max-width: 180px;">
-                <button id="btn-filtrer-ventes" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-funnel"></i>
-                </button>
-                <button id="btnPrintVentes" class="btn btn-sm btn-outline-secondary">
-                  <i class="bi bi-printer"></i> Imprimer
-                </button>
-            </div>
+
+  {# --- 2. Liste des Factures --- #}
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="card-title">Factures</h3>
+      <div>
+        <button id="btnExportExcel" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-file-earmark-excel"></i> Excel
+        </button>
+        <button id="btnExportPDF" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-file-earmark-pdf"></i> PDF
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row g-2 mb-3">
+        <div class="col-md-2">
+          <input type="text" id="filterDate" class="form-control" placeholder="Période">
         </div>
-    </div> 
-    <div class="table-responsive">
-      <table id="ventesTable" class="table table-bordered w-100 align-middle">
-        <thead >
+        <div class="col-md-2">
+          <select id="filterClientType" class="form-select">
+            <option value="">Tous types</option>
+            <option value="intern">Intern</option>
+            <option value="gesta">Gesta</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="filterClient" class="form-select">
+            <option value="">Tous les clients</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="filterReference" class="form-control" placeholder="Référence">
+        </div>
+        <div class="col-md-2">
+          <select id="filterStatus" class="form-select">
+            <option value="">Tous statuts</option>
+            <option value="en cours">En cours</option>
+            <option value="payé">Payé</option>
+            <option value="annulé">Annulé</option>
+          </select>
+        </div>
+      </div>
+      <table id="invoicesTable" class="table table-bordered table-hover">
+        <thead>
           <tr>
+            <th>Référence</th>
+            <th>Client</th>
+            <th>Type client</th>
+            <th>Total</th>
+            <th>Reste</th>
+            <th>Statut</th>
             <th>Date</th>
-            <th>Entreprise</th>
-            <th>Montant</th>
-            <th>Payé</th>
-            <th>Reliquat</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -42,127 +69,175 @@
       </table>
     </div>
   </div>
-</div>
 
-<!-- Statistiques -->
- <div class="row mt-4 " id="venteStats">
-  <div class="col-md-3">
-    <div class="card bg-info text-center">
-      <div class="card-body">
-        <h6 class="text-muted">Nombre de facture</h6>
-        <h5><span id="stat-nb-total">--</span> ventes / <span id="stat-total">--</span> FCFA</h5>
-      </div>
+  {# --- 3. Formulaire d'ajout de facture --- #}
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3 class="card-title">Ajouter une Facture</h3>
     </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card bg-warning text-white text-center">
-      <div class="card-body">
-        <h6>Factures Ofset</h6>
-        <h5><span id="stat-nb-ofset">--</span> / <span id="stat-ofset">--</span> FCFA</h5> 
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card bg-danger text-dark text-center">
-      <div class="card-body">
-        <h6>Fcatures Gesta</h6>
-        <h5><span id="stat-nb-gesta">--</span> / <span id="stat-gesta">--</span> FCFA</h5>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card bg-primary text-white text-center">
-      <div class="card-body">
-        <h6>Payé</h6>
-        <h5>Reçu : <span id="stat-recu">--</span> FCFA</h5>
-
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card bg-success text-white text-center">
-      <div class="card-body">
-        <h6>Impayé</h6>
-        <h5>Reçu : <span id="stat-benef">--</span> FCFA</h5>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card shadow mb-4">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <strong><i class="bi bi-cart-plus me-2"></i>Nouvelle Facture</strong>
-  </div>
-  <div class="card-body">
-    <form id="formVente"> 
-
-      <div id="alertAucuneLigne" class="alert alert-warning text-center" style="display:none;">
-        Aucune ligne, veuillez ajouter une ligne.
-      </div>
-      <!-- Lignes Produits -->
-      <div id="ligneProduits">
-        
-      </div>
-
-      <div class="d-flex justify-content-end mt-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="ajouterLigne">
-          <i class="bi bi-plus-circle me-1"></i> Ajouter un service
+    <div class="card-body">
+      <form id="form-add-invoice">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label>Date</label>
+            <input type="date" name="createdAt" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label>Client</label>
+            <select name="clientId" id="addInvoiceClient" class="form-select" required>
+              <option value="">Sélectionner un client</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label>Statut</label>
+            <select name="status" class="form-select" required>
+              <option value="en cours">En cours</option>
+              <option value="payé">Payé</option>
+              <option value="annulé">Annulé</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label>Montant total</label>
+            <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
+          </div>
+        </div>
+        <hr>
+        <h6>Éléments de la facture</h6>
+        <div id="invoiceLines">
+          <div class="row g-2 invoice-line">
+            <div class="col-md-5">
+              <input name="items[0][description]" class="form-control" placeholder="Description" required>
+            </div>
+            <div class="col-md-2">
+              <input type="number" name="items[0][amount]" class="form-control" placeholder="Montant" min="0" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <input type="number" name="items[0][quantity]" class="form-control" placeholder="Qté" min="1" required>
+            </div>
+            <div class="col-md-1 text-end">
+              <button type="button" class="btn btn-sm btn-danger btn-remove-line">&times;</button>
+            </div>
+          </div>
+        </div>
+        <button id="btnAddInvoiceLine" type="button" class="btn btn-sm btn-secondary mt-2">
+          <i class="bi bi-plus-lg"></i> Ajouter une ligne
         </button>
-      </div>
-
-      <hr>
-
-      <!-- Infos Paiement -->
-      <div class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label">Client </label>
-          <input type="text" id="client" class="form-control">
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn btn-primary">Créer la facture</button>
         </div>
-        <div class="col-md-3">
-          <label class="form-label">Type de paiement</label>
-          <select id="type_paiement" class="form-select">
-            <option value="especes">Espèces</option>
-            <option value="credit">Crédit</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Montant payé</label>
-          <input type="number" id="montant_paye" class="form-control" step="0.01" min="0">
-        </div>
-        <div class="col-md-3 d-grid">
-          <label class="form-label invisible">Valider</label>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Valider</button>
-        </div>
-      </div>
-
-      <!-- Résumé -->
-      <div class="mt-4 rounded p-3 border shadow-sm" id="venteResume" style="display:none;">
-      <div class="row text-center">
-        <div class="col-md-4">
-          <h6>Total à payer</h6>
-          <span id="venteTotal" class="fw-bold text-success fs-5">0 FCFA</span>
-        </div>
-        <div class="col-md-4">
-          <h6>Reste à payer</h6>
-          <span id="venteReste" class="fw-bold text-danger fs-5">0 FCFA</span>
-        </div>
-        <div class="col-md-4">
-          <h6>Bénéfice estimé</h6>
-          <span id="venteBenefice" class="fw-bold text-primary fs-5">0 FCFA</span>
-        </div>
-      </div>
+      </form>
     </div>
+  </div>
 
+</div>
 
-    </form>
+{# --- Modals d'Actions --- #}
+
+{# Modal Paiement Facture #}
+<div class="modal fade" id="modalPayInvoice" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-pay-invoice">
+        <div class="modal-header">
+          <h5 class="modal-title">Payer la Facture</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="payInvoiceId" name="invoiceId">
+          <div class="mb-3">
+            <label>Montant</label>
+            <input type="number" id="payAmount" name="amount" class="form-control" min="0" step="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label>Mode de paiement</label><br>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="useBalance" id="useBalanceYes" value="yes">
+              <label class="form-check-label" for="useBalanceYes">Solde client</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="useBalance" id="useBalanceNo" value="no" checked>
+              <label class="form-check-label" for="useBalanceNo">Paiement direct</label>
+            </div>
+          </div>
+          <div class="mb-3 d-none" id="balanceInfo">
+            <small>Solde disponible : <span id="clientBalance"></span> FCFA</small>
+          </div>
+          <div class="row gx-2 direct-pay-fields d-none">
+            <div class="col-md-6 mb-3">
+              <label>Mode</label>
+              <select name="paymentMethod" class="form-select">
+                <option value="espèces">Espèces</option>
+                <option value="chèque">Chèque</option>
+                <option value="virement">Virement</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Référence</label>
+              <input type="text" name="paymentReference" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-success">Valider le paiement</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
+{# Modal Annulation Facture #}
+<div class="modal fade" id="modalCancelInvoice" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-cancel-invoice">
+        <div class="modal-header">
+          <h5 class="modal-title">Annuler la Facture</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="cancelInvoiceId" name="invoiceId">
+          <div class="mb-3">
+            <label>Justification (obligatoire)</label>
+            <textarea name="reason" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-danger">Confirmer annulation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Modal Historique Paiements #}
+<div class="modal fade" id="modalHistoryInvoice" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Historique des Paiements</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table id="historyTable" class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Montant</th>
+              <th>Mode</th>
+              <th>Référence</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
 
-{% block javascripts %} 
-  <script src="{{ asset('assets/appjs/vente.js') }}"></script>
+{% block javascripts %}
+  <script src="{{ asset('assets/appjs/facture.js') }}"></script>
 {% endblock %}

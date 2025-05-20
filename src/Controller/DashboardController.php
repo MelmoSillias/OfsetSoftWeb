@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Entity\Client;
 
 final class DashboardController extends AbstractController
 {
@@ -17,7 +18,7 @@ final class DashboardController extends AbstractController
         ]);
     }
 
-    #[Route('/api/DataTableFrJson')]
+    #[Route('/api/datatable_json_fr', name: 'get_frjson_datatable', methods: ['GET'])]
     public function getDataTableFrJson(): JsonResponse
     {
         $filePath = $this->getParameter('kernel.project_dir') . '/public/utils/dataTables_fr-FR.json';

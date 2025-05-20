@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -36,6 +38,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     private ?string $FullName = null;
+
+    /**
+     * @var Collection<int, Invoice>
+     */
+    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'user')]
+    private Collection $yes;
+
+    /**
+     * @var Collection<int, AccountTransaction>
+     */
+    #[ORM\OneToMany(targetEntity: AccountTransaction::class, mappedBy: 'user')]
+    private Collection $accountTransactions;
+
+    public function __construct()
+    {
+        $this->yes = new ArrayCollection();
+        $this->accountTransactions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -132,6 +152,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFullName(string $FullName): static
     {
         $this->FullName = $FullName;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Invoice>
+     */
+    public function getYes(): Collection
+    {
+        return $this->yes;
+    }
+
+    public function addYe(Invoice $ye): static
+    {
+        if (!$this->yes->contains($ye)) {
+            $this->yes->add($ye);
+            $ye->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeYe(Invoice $ye): static
+    {
+        if ($this->yes->removeElement($ye)) {
+            // set the owning side to null (unless already changed)
+            if ($ye->getUser() === $this) {
+                $ye->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AccountTransaction>
+     */
+    public function getAccountTransactions(): Collection
+    {
+        return $this->accountTransactions;
+    }
+
+    public function addAccountTransaction(AccountTransaction $accountTransaction): static
+    {
+        if (!$this->accountTransactions->contains($accountTransaction)) {
+            $this->accountTransactions->add($accountTransaction);
+            $accountTransaction->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAccountTransaction(AccountTransaction $accountTransaction): static
+    {
+        if ($this->accountTransactions->removeElement($accountTransaction)) {
+            // set the owning side to null (unless already changed)
+            if ($accountTransaction->getUser() === $this) {
+                $accountTransaction->setUser(null);
+            }
+        }
 
         return $this;
     }

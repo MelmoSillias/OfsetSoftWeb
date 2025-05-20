@@ -1,0 +1,303 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Détails du Client{% endblock %}
+
+{% block stylesheets %}
+{% endblock %} 
+
+{% block main %}
+<div class="container-fluid">
+
+  {# --- 1. Informations du Client --- #}
+  <div class="card card-info card-outline mb-4">
+    <div class="card-header">
+      <h3 class="card-title">Informations du Client</h3>
+    </div>
+    <div class="card-body">
+      <form>
+      <div class="row mb-2">
+        <div class="col-md-5">
+        <label class="form-label"><strong>Nom de L'entreprise :</strong></label>
+        <input type="text" class="form-control" value="{{ client.companyName }}" disabled>
+        </div>
+        <div class="col-md-4">
+        <label class="form-label"><strong>Représentant :</strong></label>
+        <input type="text" class="form-control" value="{{ client.delegate }}" disabled>
+        </div>
+        <div class="col-md-3">
+        <label class="form-label"><strong>Téléphone :</strong></label>
+        <input type="text" class="form-control" value="{{ client.phoneNumber }}" disabled>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6">
+        <label class="form-label"><strong>Adresse :</strong></label>
+        <input type="text" class="form-control" value="{{ client.address }}" disabled>
+        </div>
+        <div class="col-md-3">
+        <label class="form-label"><strong>Type de Client :</strong></label>
+        <input type="text" class="form-control" value="{{ client.type }}" disabled>
+        </div>
+        <div class="col-md-3">
+        <label class="form-label"><strong>Date d'inscription :</strong></label>
+        <input type="text" class="form-control" value="--" disabled>
+        </div>
+      </div>
+      </form>
+    </div>
+  </div>
+  
+  {# --- Stats --- #}
+  <div class="row mb-4" id="clientInfoStats">
+    <div class="col-md-3 col-sm-6">
+      <div class="info-box mb-3">
+        <span class="info-box-icon bg-info"><i class="bi bi-cash-stack"></i></span>
+        <div class="info-box-content">
+      <span class="info-box-text text-dark dark-mode-text-white">Solde</span>
+      <span class="info-box-number text-dark dark-mode-text-white">-- FCFA</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box mb-3 col-sm-6">
+        <span class="info-box-icon bg-primary"><i class="bi bi-receipt"></i></span>
+        <div class="info-box-content">
+      <span class="info-box-text text-dark dark-mode-text-white">Factures totales</span>
+      <span class="info-box-number text-dark dark-mode-text-white">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box mb-3 col-sm-6">
+        <span class="info-box-icon bg-warning"><i class="bi bi-exclamation-octagon"></i></span>
+        <div class="info-box-content">
+      <span class="info-box-text text-dark">Impayées</span>
+      <span class="info-box-number text-dark">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="info-box mb-3 col-sm-6">
+        <span class="info-box-icon bg-success"><i class="bi bi-arrow-repeat"></i></span>
+        <div class="info-box-content">
+      <span class="info-box-text text-dark dark-mode-text-white">Renouvelables actives</span>
+      <span class="info-box-number text-dark dark-mode-text-white">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# --- 2. Factures Renouvelables --- #}
+  <div class="card card-danger card-outline">
+    <div class="card-header d-flex justify-content-between align-items-center bg-danger bg-opacity-25">
+      <h3 class="card-title">Factures Renouvelables</h3>
+      <button id="btnAddRenewable" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg"></i> Ajouter
+      </button>
+    </div>
+    <div class="card-body" id="renewableCards">
+      {# Cards injectées via AJAX #}
+    </div>
+  </div>
+
+  {# --- 3. Factures Ponctuelles --- #}
+  <div class="card card-success card-outline mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center  bg-success bg-opacity-25">
+      <h3 class="card-title">Factures</h3>
+      <button id="btnAddInvoice" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg"></i> Ajouter Facture
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <input type="text" id="filterInvoiceDate" class="form-control" placeholder="Période (ex. 01/01/2025 - 31/01/2025)">
+        </div>
+        <div class="col-md-4">
+          <select id="filterInvoiceStatus" class="form-select">
+            <option value="">Tous</option>
+            <option value="en cours">En cours</option>
+            <option value="payé">Payé</option>
+            <option value="annulé">Annulé</option>
+          </select>
+        </div>
+      </div>
+      <table id="invoicesTable" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Total</th>
+            <th>Reste</th>
+            <th>Statut</th>
+            <th>Date de création</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  {# --- 4. Transactions du Client --- #}
+  <div class="card card-primary card-outline mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center bg-primary bg-opacity-25">
+      <h3 class="card-title mb-0">Transactions</h3>
+      <div class="d-flex align-items-center">
+      <label for="filterTransactionType" class="me-2 mb-0 w-50">Type :</label>
+      <select id="filterTransactionType" class="form-select form-select-sm" style="min-width:120px;">
+        <option value="">Tous</option>
+        <option value="entry">Entrée</option>
+        <option value="exit">Sortie</option>
+      </select>
+      </div>
+    </div>
+    <div class="card-body">
+      <table id="transactionsTable" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Montant</th>
+            <th>Mode de paiement</th>
+            <th>Référence</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{# --- Modals --- #}
+
+{# 2a. Modal Ajout Facture Renouvelable #}
+<div class="modal fade" id="modalAddRenewable" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="form-add-renewable">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajouter Facture Renouvelable</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label>Période</label>
+              <select name="period" class="form-select" required>
+                <option value="">Sélectionner</option>
+                <option value="mensuel">Mensuel</option>
+                <option value="trimestriel">Trimestriel</option>
+                <option value="annuel">Annuel</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Date de début</label>
+              <input type="date" name="startDate" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Montant</label>
+              <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Statut</label>
+              <select name="status" class="form-select" required>
+                <option value="active">Actif</option>
+                <option value="inactive">Inactif</option>
+              </select>
+            </div>
+          </div>
+          <hr>
+          <h6>Éléments de la facture</h6>
+          <div id="renewableLines">
+            <div class="row mb-2 renewable-line">
+              <div class="col-md-5">
+                <input name="items[0][description]" class="form-control" placeholder="Description" required>
+              </div>
+              <div class="col-md-3">
+                <input type="number" name="items[0][amount]" class="form-control" placeholder="Montant" min="0" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <input type="number" name="items[0][quantity]" class="form-control" placeholder="Qté" min="1" required>
+              </div>
+              <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-sm btn-danger btn-remove-line">&times;</button>
+              </div>
+            </div>
+          </div>
+          <button id="btnAddRenewableLine" type="button" class="btn btn-sm btn-secondary">
+            <i class="bi bi-plus-lg"></i> Ajouter une ligne
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# 3a. Modal Ajout Facture Ponctuelle #}
+<div class="modal fade" id="modalAddInvoice" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="form-add-invoice">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajouter Facture</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label>Date</label>
+              <input type="date" name="createdAt" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Statut</label>
+              <select name="status" class="form-select" required>
+                <option value="en cours">En cours</option>
+                <option value="payé">Payé</option>
+                <option value="annulé">Annulé</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Montant total</label>
+              <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
+            </div>
+          </div>
+          <hr>
+          <h6>Éléments de la facture</h6>
+          <div id="invoiceLines">
+            <div class="row mb-2 invoice-line">
+              <div class="col-md-5">
+                <input name="items[0][description]" class="form-control" placeholder="Description" required>
+              </div>
+              <div class="col-md-3">
+                <input type="number" name="items[0][amount]" class="form-control" placeholder="Montant" min="0" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <input type="number" name="items[0][quantity]" class="form-control" placeholder="Qté" min="1" required>
+              </div>
+              <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-sm btn-danger btn-remove-line">&times;</button>
+              </div>
+            </div>
+          </div>
+          <button id="btnAddInvoiceLine" type="button" class="btn btn-sm btn-secondary">
+            <i class="bi bi-plus-lg"></i> Ajouter une ligne
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+  <script src="{{ asset('assets/appjs/client_show.js') }}"></script>
+{% endblock %}

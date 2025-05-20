@@ -1,0 +1,82 @@
+User:
+	- id 
+	- username
+	- roles
+	- password
+	- fulname
+	- job
+	- isActive
+
+Client:
+	- id
+	- companyName
+	- delagate
+	- address
+	- phoneNumber 
+	- type (intern or gesta)
+	- committee : nullable
+
+	
+Invoice:
+	- id
+	- client
+	- createdAt
+	- updatedAt
+	- amount
+	- remain
+	- status (en cours, payé, annulé)
+	- user
+
+InvoiceItems:
+	- id
+	- facture
+	- description
+	- amount
+	- quantity
+
+Comission:
+	- id
+	- facture 
+	- createdAt
+	- takenAt
+	- amount
+	- status (prise, payé, annulé)
+	- user
+
+Transaction:
+	- id
+	- createdAt
+	- updatedAt
+	- income
+	- outcome
+	- account_type (supplier, expense, client)
+	- balanceAt
+	- status (en attente de validation, validé, rejétée)
+	- paymentMethod (chèque, virement, espèces)
+	- paymentReference
+	- user
+	- facture : nullable
+	- client : nullable
+	- commission : nullable
+	- validatedAt : nullable
+	- validationUser : nullable
+
+RenewableFacture:
+	- id
+	- client
+	- createdAt
+	- updatedAt
+	- period
+	- startDate
+	- endDate : nullable
+	- nextDate 
+	- amount
+	- status (active, inactive)
+	- user
+
+RenewableFactureItems:
+	- id
+	- renewableFacture
+	- description
+	- amount
+	- quantity
