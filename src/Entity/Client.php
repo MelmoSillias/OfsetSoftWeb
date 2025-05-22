@@ -240,4 +240,13 @@ class Client
 
         return $this;
     }
+
+    public function getBalance(): float
+    {
+        $lastTransaction = $this->accountTransactions->last();
+        if ($lastTransaction === false) {
+            return 0.0;
+        }
+        return $lastTransaction->getBalanceValue();
+    }
 }

@@ -1,0 +1,71 @@
+# Modèle de données – Module de gestion de tâches
+
+Le module permet à l'entreprise de suivre les tâches attribuées à ses employés après chaque réunion (appelée ici session, ex : "taf n°1"). Chaque session contient plusieurs tâches réparties entre les employés. Un employé peut notifier la fin d'une tâche, mais seul l’administrateur peut la valider ou la rejeter. 
+Des bilans peuvent être générés par session ou globalement.
+
+## Entités
+
+### 1. User
+Représente un utilisateur de l’application (employé ou administrateur).
+
+- id : entier
+- username : chaîne (unique)
+- password : chaîne
+- roles : liste (ex : ROLE_ADMIN, ROLE_EMPLOYEE)
+- fullName : chaîne
+- *Relations* :
+  - A plusieurs Task (tâches assignées)
+
+---
+
+### 2. Session
+Représente une réunion (ex : "taf n°1", "taf n°2").
+
+- id : entier
+- name : chaîne (nom de la session, ex. "taf n°1")
+- createdAt : datetime
+- *Relations* :
+  - A plusieurs Task
+
+---
+
+### 3. Task
+Représente une tâche assignée à un employé dans une session.
+
+- id : entier
+- title : chaîne
+- description : texte (optionnel)
+- deadline : datetime
+- adminNote : texte (optionnel)
+- status : enum (pending, waiting_validation, validated, rejected)
+- createdAt : datetime
+- updatedAt : datetime (optionnel)
+- urgency : enum (low, medium, high)
+- completedAt : datetime (optionnel)
+- *Relations* :
+  - assignedTo : User
+  - session : Session
+
+---
+
+## Fonctionnalités principales
+
+### Administrateur de la page
+
+- Créer une session ("taf n°X" avec numéro auto-incrémenté)
+- Attribuer des tâches aux employés par session
+- Voir les tâches par session ou par employé
+- suppimer les tâches encore en attente.
+- Valider ou rejeter les tâches signalées comme terminées
+- Générer un *bilan par session*
+- Générer un *bilan général* (toutes les sessions)
+
+---
+
+### Employé sur sa page à lui 
+
+- Voir ses tâches (filtrées par session ou statut, par urgence)
+- marquer les tâches aux delais dépassés d'un badge 
+- Marquer une tâche comme terminée (passe en waiting_validation)
+- Suivre le statut de chaque tâche (en attente, validée, rejetée)
+

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-turbo-permanent>
+<html lang="fr" data-turbo-permanent data-bs-theme="{{ app.user ? app.user.theme : 'light' }}">
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}StockifyWeb{% endblock %}</title>
@@ -100,13 +100,38 @@
 
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" data-lte-toggle="fullscreen" href="#">
-            <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
-            <i data-lte-icon="minimize" class="bi bi-fullscreen-exit d-none"></i>
-          </a>
+            <a class="nav-link" data-lte-toggle="fullscreen" href="#" id="fullscreenToggleBtn">
+            <i id="fullscreenIconMax" data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
+            <i id="fullscreenIconMin" data-lte-icon="minimize" class="bi bi-fullscreen-exit d-none"></i>
+            </a>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              const btn = document.getElementById('fullscreenToggleBtn');
+              const iconMax = document.getElementById('fullscreenIconMax');
+              const iconMin = document.getElementById('fullscreenIconMin');
+              function updateIcons() {
+              if (document.fullscreenElement) {
+                iconMax.classList.add('d-none');
+                iconMin.classList.remove('d-none');
+              } else {
+                iconMax.classList.remove('d-none');
+                iconMin.classList.add('d-none');
+              }
+              }
+              btn.addEventListener('click', function (e) {
+              e.preventDefault();
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+              } else {
+                document.exitFullscreen();
+              }
+              });
+              document.addEventListener('fullscreenchange', updateIcons);
+            });
+            </script>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#" id="toggleThemeBtn" title="Changer de thème">
+          <a class="nav-link" href="#" id="toggleThemeBtn" title="Changer de thème" id="toggleThemeBtn">
             <i class="bi bi-moon-fill" id="theme-icon"></i>
           </a>
         </li>
@@ -133,77 +158,95 @@
     </div>
 
     <div class="sidebar-wrapper">
-      <nav class="mt-2">
-        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
+    <nav class="mt-2">
+      <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
 
-          <li class="nav-item">
-            <a href="{{ path('app_dashboard') }}" class="nav-link {{ controller_name starts with 'Dashboard' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-house"></i><p>Tableau de bord</p>
-            </a>
-          </li>
-          
-          <hr>
+        {% if is_granted('ROLE_DASHBOARD') %}
+        <li class="nav-item">
+          <a href="{{ path('app_dashboard') }}" class="nav-link {{ controller_name starts with 'Dashboard' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-house"></i>
+            <p>Tableau de bord</p>
+          </a>
+        </li>
+        {% endif %}
 
-        {# <li class="nav-item">
-            <a href="{{ path('app_produit') }}" class="nav-link {{ controller_name starts with 'Produit' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-box-seam"></i><p>Produits</p>
-            </a>
-          </li> #}
+        <hr>
 
+        {% if is_granted('ROLE_SESSIONS') %}
+        <li class="nav-item">
+          <a href="{{ path('app_session') }}" class="nav-link {{ controller_name starts with 'Session' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-clock"></i>
+            <p>Taf</p>
+          </a>
+        </li>
+        {% endif %}
 
-          {# <li class="nav-item">
-            <a href="{{ path('app_mouvement_stock') }}" class="nav-link {{ controller_name starts with 'Mouvement' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-arrow-left-right"></i><p>Mouvements de stock</p>
-            </a>
-          </li> #}
+        {% if is_granted('ROLE_DOSSIERS') %}
+        <li class="nav-item">
+          <a href="{{ path('app_dossier_index') }}" class="nav-link {{ controller_name starts with 'Dossier' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-folder"></i>
+            <p>Dossiers</p>
+          </a>
+        </li>
+        {% endif %}
 
+        {% if is_granted('ROLE_ARCHIVES') %}
+        <li class="nav-item">
+          <a href="{{ path('app_archive') }}" class="nav-link {{ controller_name starts with 'Archive' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-archive"></i>
+            <p>Archives</p>
+          </a>
+        </li>
+        {% endif %}
 
-          {# <li class="nav-item">
-            <a href="{{ path('app_vente') }}" class="nav-link {{ controller_name starts with 'Vente' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-cash-coin"></i><p>Guichet de vente</p>
-            </a>
-          </li> #}
+        {% if is_granted('ROLE_FACTURES') %}
+        <li class="nav-item">
+          <a href="{{ path('app_facture') }}" class="nav-link {{ controller_name starts with 'Facture' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-receipt"></i>
+            <p>Factures</p>
+          </a>
+        </li>
+        {% endif %}
 
+        {% if is_granted('ROLE_CLIENTS') %}
+        <li class="nav-item">
+          <a href="{{ path('app_client') }}" class="nav-link {{ controller_name starts with 'Client' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-people"></i>
+            <p>Clients</p>
+          </a>
+        </li>
+        {% endif %}
 
-          
+        {% if is_granted('ROLE_COMMISSIONS') %}
+        <li class="nav-item">
+          <a href="{{ path('app_commission') }}" class="nav-link {{ controller_name starts with 'Commission' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-currency-dollar"></i>
+            <p>Commissions</p>
+          </a>
+        </li>
+        {% endif %}
 
+        {% if is_granted('ROLE_FINANCE') %}
+        <li class="nav-item">
+          <a href="{{ path('app_finance') }}" class="nav-link {{ controller_name starts with 'Finance' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-bank"></i>
+            <p>Finance</p>
+          </a>
+        </li>
+        {% endif %}
 
-           <li class="nav-item">
-            <a href="{{ path('app_facture') }}" class="nav-link {{ controller_name starts with 'Facture' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-receipt"></i><p>Facture</p>
-            </a>
-          </li> 
+        {% if is_granted('ROLE_USERS') %}
+        <li class="nav-item">
+          <a href="{{ path('app_users') }}" class="nav-link {{ controller_name starts with 'Users' ? 'active' : '' }}">
+            <i class="nav-icon bi bi-person-gear"></i>
+            <p>Utilisateurs</p>
+          </a>
+        </li>
+        {% endif %}
 
-
-          <li class="nav-item">
-            <a href="{{ path('app_client') }}" class="nav-link {{ controller_name starts with 'Client' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-people"></i><p>Client</p>
-            </a>
-          </li> 
-
-          <li class="nav-item">
-            <a href="{{ path('app_commission') }}" class="nav-link {{ controller_name starts with 'Commission' ? 'active' : '' }}">
-                <i class="nav-icon bi bi-currency-dollar"></i><p>Commission</p>
-            </a>
-          </li> 
-
-          <li class="nav-item">
-            <a href="{{ path('app_finance') }}" class="nav-link {{ controller_name starts with 'Finance' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-bank"></i><p>Finance</p>
-            </a>
-          </li>
-
-
-          <li class="nav-item">
-            <a href="{{ path('app_users') }}" class="nav-link {{ controller_name starts with 'Users' ? 'active' : '' }}">
-              <i class="nav-icon bi bi-person-gear"></i><p>Utilisateurs</p>
-            </a>
-          </li>
-
-
-        </ul>
-      </nav>
-    </div>
+      </ul>
+    </nav>
+  </div>
   </aside>
 
   {# --- MAIN --- #}
@@ -224,19 +267,22 @@
     <div class="app-content">
       <div class="container-fluid">
         {% block main %}{% endblock %}
+        
       </div>
     </div>
+    
   </main>
 
   {# --- FOOTER --- #}
   <footer class="app-footer text-center">
-    <div class="float-end d-none d-sm-inline">Stockify - Gestion de Stock Moderne</div>
-    <strong>&copy; {{ "now"|date("Y") }} <a href="#">Votre Entreprise</a>.</strong> Tous droits réservés.
+    <div class="float-end d-none d-sm-inline"> <strong>Ofset</strong>Soft -Logiciel de gestion Ofset Consult</div>
+    <strong>&copy; {{ "now"|date("Y") }} <a href="#">Sim Corp</a>.</strong> Tous droits réservés.
   </footer>
 </div>
 
 {# --- MODAL GÉNÉRIQUE --- #}
-<div class="modal fade" id="genericModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="genericModal" tabindex
+="-1" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" id="genericModalDialog">
     <div class="modal-content" id="genericModalContent">
       <div class="modal-body text-center py-4">
@@ -307,29 +353,61 @@
       });
     }
   });
+
+    
+  // Gère l'affichage de l'icône fullscreen indépendamment du bouton
+  document.addEventListener('fullscreenchange', function () {
+    const iconMax = document.getElementById('fullscreenIconMax');
+    const iconMin = document.getElementById('fullscreenIconMin');
+    if (!iconMax || !iconMin) return;
+    if (document.fullscreenElement) {
+      iconMax.classList.add('d-none');
+      iconMin.classList.remove('d-none');
+    } else {
+      iconMax.classList.remove('d-none');
+      iconMin.classList.add('d-none');
+    }
+  });
+
 </script>
 <script>
   // Initialisation du thème depuis localStorage
- document.addEventListener('DOMContentLoaded', function () {
-    const html = document.documentElement;
-    const icon = document.getElementById('theme-icon');
-    const currentTheme = localStorage.getItem('theme') || 'light';
+ // assets/js/theme-toggle.js
+document.addEventListener('DOMContentLoaded', () => {
+  const html       = document.documentElement;
+  const btn        = document.getElementById('toggleThemeBtn');
+  const icon       = document.getElementById('theme-icon');
 
-    // Set the initial theme
-    html.setAttribute('data-bs-theme', currentTheme);
-    icon.className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-    toggleTextClasses(currentTheme);
-
-    // Toggle theme on button click
-    document.getElementById('toggleThemeBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-bs-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        icon.className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-        toggleTextClasses(newTheme);
+  btn.addEventListener('click', async e => {
+    e.preventDefault();
+    const current = html.getAttribute('data-bs-theme') || 'light';
+    const next    = current === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-bs-theme', next);
+    icon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    // 2) (Re)appliquer vos overrides text-dark / text-white si nécessaire
+    document.querySelectorAll('.text-dark, .text-white').forEach(el => {
+      el.classList.toggle('text-dark', next === 'light');
+      el.classList.toggle('text-white', next === 'dark');
     });
 
+    try {
+      const res = await fetch('/api/user/theme', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: next })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.success) { 
+        
+      } else {
+        console.error('API:', json.error);
+      }
+    } catch (err) {
+      console.error('Échec mise à jour thème', err);
+    }
+  }); 
     // Function to toggle text classes based on the theme
     function toggleTextClasses(theme) {
         const elements = document.querySelectorAll('.text-dark, .text-white');
@@ -346,9 +424,7 @@
   });
 </script>
     {% block javascripts %}
-			{% block importmap %}
-				{{ importmap('app') }}
-			{% endblock %}
+			
 		{% endblock %}
 </body>
 </html>

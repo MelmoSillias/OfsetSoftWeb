@@ -7,7 +7,53 @@
 
   {# --- 1. Statistiques Factures --- #}
   <div class="row mb-4" id="invoiceStats">
-    {# Injecté par AJAX via JS #}
+    <div class="row gx-2 gy-3">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+      <div class="info-box">
+        <span class="info-box-icon bg-primary"><i class="bi bi-receipt"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Total</span>
+          <span class="info-box-number">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+      <div class="info-box">
+        <span class="info-box-icon bg-info"><i class="bi bi-people-fill"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Intern</span>
+          <span class="info-box-number">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+      <div class="info-box">
+        <span class="info-box-icon bg-success"><i class="bi bi-building"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Gesta</span>
+          <span class="info-box-number">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+      <div class="info-box">
+        <span class="info-box-icon bg-warning"><i class="bi bi-exclamation-octagon"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Impayées</span>
+          <span class="info-box-number">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+      <div class="info-box">
+        <span class="info-box-icon bg-secondary"><i class="bi bi-clock-history"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">Nouvelles</span>
+          <span class="info-box-number">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 
   {# --- 2. Liste des Factures --- #}
@@ -46,9 +92,9 @@
         <div class="col-md-2">
           <select id="filterStatus" class="form-select">
             <option value="">Tous statuts</option>
-            <option value="en cours">En cours</option>
+            <option value="Partiellement payé">Partiellement payé</option>
             <option value="payé">Payé</option>
-            <option value="annulé">Annulé</option>
+            <option value="impayé">Impayées</option>
           </select>
         </div>
       </div>
@@ -56,8 +102,7 @@
         <thead>
           <tr>
             <th>Référence</th>
-            <th>Client</th>
-            <th>Type client</th>
+            <th>Client</th> 
             <th>Total</th>
             <th>Reste</th>
             <th>Statut</th>
@@ -85,28 +130,25 @@
           <div class="col-md-3">
             <label>Client</label>
             <select name="clientId" id="addInvoiceClient" class="form-select" required>
-              <option value="">-- choisir un client --</option>
+              <option value=""> -- choisir un client -- </option>
             </select>
           </div>
           <div class="col-md-3">
-            <label>Statut</label>
-            <select name="status" class="form-select" required>
-              <option value="en cours">En cours</option>
-              <option value="payé">Payé</option>
-              <option value="annulé">Annulé</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label>Montant total</label>
-            <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
-          </div>
+              <label>Mois</label>
+              <select type="text" name="month_str" class="form-select form-control" required>
+                <option value=""> -- Sélectionner -- </option>
+                {% for month in ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'] %}
+                  <option value="{{ month }}">{{ month }}</option>
+                {% endfor %}
+              </select>
+           </div>
         </div>
         <hr>
         <h6>Éléments de la facture</h6>
         <div id="invoiceLines">
-          <div class="row g-2 invoice-line">
+          <div class="row g-2 invoice-line mb-2">
             <div class="col-md-5">
-              <input name="items[0][description]" class="form-control" placeholder="Description" required>
+              <textarea name="items[0][description]" class="form-control" placeholder="Description" required rows="2"></textarea>
             </div>
             <div class="col-md-2">
               <input type="number" name="items[0][amount]" class="form-control" placeholder="Montant" min="0" step="0.01" required>
@@ -132,59 +174,53 @@
 </div>
 
 {# --- Modals d'Actions --- #}
-
+ 
 {# Modal Paiement Facture #}
-<div class="modal fade" id="modalPayInvoice" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalInvoicePayment" tabindex="-1" aria-hidden="true" data-id='' data-remain="0">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="form-pay-invoice">
+      <form id="form-invoice-payment">
         <div class="modal-header">
-          <h5 class="modal-title">Payer la Facture</h5>
+          <h5 class="modal-title">Paiement de la Facture</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="payInvoiceId" name="invoiceId">
+          <div class="mb-2 text-end">
+            <h5 class="text-primary">Solde compte local : <span id="soldeCompteLocal">--</span></h5>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label"><strong>Montant à payer</strong></label>
+            <input type="number" name="amount" class="form-control" id="paymentAmount" min="0" step="0.01" required>
+          </div>
+
           <div class="mb-3">
-            <label>Montant</label>
-            <input type="number" id="payAmount" name="amount" class="form-control" min="0" step="0.01" required>
+            <label class="form-label"><strong>Mode de paiement</strong></label>
+            <select name="paymentMethod" class="form-select" required>
+              <option value=""> -- Sélectionner -- </option>
+              <option value="compte">Compte local</option>
+              <option value="Espèces">Espèces</option>
+              <option value="chèque">Chèque</option>
+              <option value="virement">Virement</option> 
+            </select>
           </div>
           <div class="mb-3">
-            <label>Mode de paiement</label><br>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="useBalance" id="useBalanceYes" value="yes">
-              <label class="form-check-label" for="useBalanceYes">Solde client</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="useBalance" id="useBalanceNo" value="no" checked>
-              <label class="form-check-label" for="useBalanceNo">Paiement direct</label>
-            </div>
+            <label class="form-label"><strong>Référence (optionnel)</strong></label>
+            <input type="text" name="reference" class="form-control" placeholder="Référence du paiement">
           </div>
-          <div class="mb-3 d-none" id="balanceInfo">
-            <small>Solde disponible : <span id="clientBalance"></span> FCFA</small>
-          </div>
-          <div class="row gx-2 direct-pay-fields d-none">
-            <div class="col-md-6 mb-3">
-              <label>Mode</label>
-              <select name="paymentMethod" class="form-select">
-                <option value="espèces">Espèces</option>
-                <option value="chèque">Chèque</option>
-                <option value="virement">Virement</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label>Référence</label>
-              <input type="text" name="paymentReference" class="form-control">
-            </div>
+          <div class="mb-2 text-end">
+            <small class="text-muted">Montant restant à payer : <span id="remainingAmount">--</span> FCFA</small>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-success">Valider le paiement</button>
+          <button type="submit" class="btn btn-primary">Valider le paiement</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
 
 {# Modal Annulation Facture #}
 <div class="modal fade" id="modalCancelInvoice" tabindex="-1" aria-hidden="true">

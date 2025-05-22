@@ -1,0 +1,166 @@
+# Data Model for Case Management - Symfony
+
+## Main Entities
+
+### 1. Case
+- id (integer, auto-increment): unique identifier
+- reference (string, unique): case reference
+- senderName (string): name of the sending company
+- senderContact (string): sender's contact information
+- dateReception (datetime): date of receipt
+- modeTransmission (string): email, mail, hand delivery, etc.
+- urgency (string): normal, urgent, very urgent
+- sender (string): person who sent the file
+- primary recipient (User): the person to whom it is primarily intended
+- owner (User): currently assigned user (one at a time)
+- documents (collection): associated documents
+- history (collection): processing history
+- status (string): received, in process, in validation, filed, archived, transferred
+- general observations (text): general notes
+
+### 2. Document
+- id (integer, auto-increment)
+- folder (Folder): parent folder
+- description (string)
+- number of copies (integer)
+- number of pages (integer)
+- document date (date)
+- supporting documents (text)
+- attached file (string): file path
+- notes (text)
+
+### 3. User
+- id
+- username
+- roles
+- password
+- full name
+- job
+- isActive
+
+### 4. ProcessingFile
+- id (integer, auto-increment)
+- file (File)
+- employee (Employee): employee who performed the action
+- processing date (datetime)
+- observations (text)
+- action (string): possible values:
+* assign: first assignment
+* reassign: reassignment to another employee
+* process: processing completed
+* return: returned for corrections
+* valid: validation completed
+* archive: archiving completed
+* transfer: external transfer
+
+### 5. TransferFile
+- id (integer, auto-increment)
+- file (File)
+- transfer date (datetime)
+- destination (string)
+- reason (string)
+- transferresponsible (User)
+
+### 6. Archiving
+- id (integer, auto-increment)
+- file (File)
+- archiving date (datetime)
+- warehouse office (string)
+- archivist (User)
+- ArchivingCoordinate (string)
+- ArchivingNotes (text)
+
+## Important Business Rules
+
+1. File Reassignment:
+- A file can only be assigned to one employee at a time
+- Upon reassignment:
+* The 'owner' field of the File is updated
+* A new ProcessingFile record is created with action='reassign'
+* The history keeps track of the previous assignee
+
+2. Processing Workflow:
+- Any status change must create a ProcessingFile record
+- The 'status' field of the File must always reflect the current status
+
+3. Full History:
+- All actions on a file are tracked via ProcessingFile
+- Allows you to reconstruct the complete path of a file
+
+4. Documents:
+- A file can contain one or more documents
+- Documents are automatically deleted if the file is deleted
+
+5. Archiving:
+- A file cannot be archived Only once
+- After archiving, the status changes to 'archived'
+
+- **Sections to add**:
+- **Files** (Current management)
+- **Archives** (Viewing classified files)
+
+---
+
+### ** "Files" Page**
+#### **A. File List (Main Page)**
+- **Filters**:
+- By status (Received/In process/Validated/Archived)
+- By urgency
+- By date received (period)
+- By assigned employee
+- By sender (company name)
+
+- **Columns**:
+- Reference | Sender | Date received | Urgency | Assigned to | Status | Actions
+
+- **Quick Actions**:
+- "New File" button
+- Actions in the list: View/Modify/Reassign/Archive
+
+#### **B. File Sheet (Full Details)**
+- **Tabs**:
+1. **Summary**:
+- Basic information (sender, reference, dates)
+- Workflow progress bar
+- Action buttons (Validate, Reassign, Print slip, Export to PDF/Excel)
+
+2. **Documents**:
+- List of documents with preview in a modal
+- "Add Document" button
+- Download attachments
+
+3. **History**:
+- Timeline of actions (who did what and when)
+- Comments at each step
+
+4. **Processing** (visible only to the assigned employee):
+- Input area for comments
+- "Mark as processed" button
+
+### ** "Archives" Interface**
+- By period, reference, keyword
+- Filters by repository/archivist office
+
+- **Visualization**:
+- Compact list with metadata preview with datatables
+- Button "View" to view the complete digitized file
+
+---
+
+### ** Visual Workflow **
+- ** Progress Bar ** (present on each file card):
+```
+[Received] → [In Process] → [Validation] → [Filed/Archived]
+```
+- ** Color Code **:
+- Red: Urgent/Late
+- Orange: In Process
+- Green: Completed/Validated
+- Blue: Archived
+
+---
+
+titre du champ
+---------------------------------------
+champ avec contraste et sans bordure basse
+---------------------------------------

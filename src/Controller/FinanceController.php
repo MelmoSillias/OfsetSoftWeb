@@ -45,10 +45,7 @@ final class FinanceController extends AbstractController
         }
         if ($to = $req->query->get('to')) {
             $qb->andWhere('t.createdAt <= :to')->setParameter('to', new \DateTime($to));
-        }
-        if ($method = $req->query->get('paymentMethod')) {
-            $qb->andWhere('t.paymentMethod = :pm')->setParameter('pm', $method);
-        }
+        } 
         if ($status = $req->query->get('status')) {
             $qb->andWhere('t.status = :st')->setParameter('st', $status);
         }
@@ -61,6 +58,35 @@ final class FinanceController extends AbstractController
                 'income'        => $t->getIncome(),
                 'outcome'       => $t->getOutcome(),
                 'balanceValue'  => $t->getBalanceValue(),
+                'paymentMethod' => $t->getPaymentMethod(),
+                'paymentRef'    => $t->getPaymentRef(),
+                'status'        => $t->getStatus(),
+                'describ'       => $t->getDescrib(),
+                'reason'        => $t->getReason(),
+            ];
+        }
+
+        return $this->json(['data' => $data]);
+    }
+
+    #[Route('/api/account-transactions-validations', name: 'list_validation', methods: ['GET'])]
+    public function listValidations(Request $req, EntityManagerInterface $em): JsonResponse
+    {
+        $qb = $em->getRepository(AccountTransaction::class)
+            ->createQueryBuilder('t')
+            ->andWhere('t.status = :status')->setParameter('status', 'en attente'); 
+
+        $data = [];
+        foreach ($qb->orderBy('t.createdAt','DESC')->getQuery()->getResult() as $t) {
+            $data[] = [
+                'id'            => $t->getId(),
+                'createdAt'     => $t->getCreatedAt()->format('Y-m-d'),
+                'amount' => $t->getIncome() > 0 
+                    ? '+' . $t->getIncome() 
+                    : '-' . $t->getOutcome(),
+                'user' =>  $t->getUser()->getFullName(),
+                'balanceValue'  => $t->getBalanceValue(),
+                'account_type' => $t->getAccountType(),
                 'paymentMethod' => $t->getPaymentMethod(),
                 'paymentRef'    => $t->getPaymentRef(),
                 'status'        => $t->getStatus(),
@@ -124,7 +150,7 @@ final class FinanceController extends AbstractController
           ->setPaymentRef($data['paymentRef'])
           ->setStatus($data['status'])
           ->setDescrib($data['describ'])
-          ->setReason($data['reason'])
+          ->setReason($data['reason']) 
           ->setUser($this->getUser());
 
         $em->persist($t);
@@ -188,5 +214,34 @@ final class FinanceController extends AbstractController
 
         $em->flush();
         return $this->json(['success' => true]);
+    }
+
+    /**
+     * POST /api/account-transactions/{id}/validate
+     * Valider une transaction en attente
+     */
+    #[Route('/api/account-transactions/{id}/validate', name: 'validate', methods: ['POST'])]
+    public function validate(AccountTransaction $t, EntityManagerInterface $em): JsonResponse
+    {
+        if ($t->getStatus() !== 'en attente') {
+            return $this->json(['error' => 'La transaction n\'est pas en attente'], 400);
+        }
+
+        $t->setStatus('validé')
+          ->setValidateAt(new \DateTimeImmutable())
+          ->setValidationUser($this->getUser())
+          ->setUpdatedAt(new \DateTimeImmutable());
+
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/transaction/{id}/print', name: 'transaction', methods: ['GET'])]
+    public function transactionReceipt(AccountTransaction $transaction): Response
+    {
+        return $this->render('finance/receipt.html.twig', [
+            'transaction' => $transaction,
+        ]);
     }
 }

@@ -9,6 +9,7 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceItem;
 use App\Repository\AccountTransactionRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use NumberFormatter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,29 +28,88 @@ final class FactureController extends AbstractController
 
     /**
      * GET /api/invoices/stats
-     * Retourne : total, intern, gesta, unpaid, recent
+     * Stats des factures
      */
-    #[Route('/api/invoices/stats', name: 'invoices_stats', methods: ['GET'])]
-    public function stats(EntityManagerInterface $em): JsonResponse
+    #[Route('/api/invoices/stats', name: 'invoice_stats', methods: ['GET'])]
+    public function stats(Request $req, EntityManagerInterface $em): JsonResponse
     {
-        $invRepo = $em->getRepository(Invoice::class);
-        $total     = $invRepo->count([]);
-        $intern = (int) $em->createQuery('SELECT COUNT(i.id) FROM App\Entity\Invoice i JOIN i.client c WHERE c.type = :type')
-            ->setParameter('type', 'intern')
-            ->getSingleScalarResult();
-        $gesta = (int) $em->createQuery('SELECT COUNT(i.id) FROM App\Entity\Invoice i JOIN i.client c WHERE c.type = :type')
-            ->setParameter('type', 'gesta')
-            ->getSingleScalarResult();
-        $unpaid    = $invRepo->count(['status' => 'en cours']);
-        $thirtyAgo = new \DateTime('-30 days');
-        $recent    = (int) $invRepo->createQueryBuilder('i')
-            ->select('count(i.id)')
-            ->where('i.createdAt >= :since')
-            ->setParameter('since', $thirtyAgo)
-            ->getQuery()
-            ->getSingleScalarResult();
+        $from = $req->query->get('from');
+        $to   = $req->query->get('to');
 
-        return $this->json(compact('total','intern','gesta','unpaid','recent'));
+        // 1) Total
+        $qbTotal = $em->getRepository(Invoice::class)
+            ->createQueryBuilder('i')
+            ->select('COUNT(i.id)');
+        if ($from) { $qbTotal->andWhere('i.createdAt >= :from')->setParameter('from', new \DateTime($from)); }
+        if ($to)   { $qbTotal->andWhere('i.createdAt <= :to')  ->setParameter('to',   new \DateTime($to)); }
+        $total = (int) $qbTotal->getQuery()->getSingleScalarResult();
+
+        // 2) Intern
+        $qbIntern = $em->createQueryBuilder()
+            ->select('COUNT(i.id)')
+            ->from(Invoice::class, 'i')
+            ->join('i.client','c')
+            ->where('c.type = :intern')
+            ->setParameter('intern','intern');
+        if ($from) { $qbIntern->andWhere('i.createdAt >= :from')->setParameter('from', new \DateTime($from)); }
+        if ($to)   { $qbIntern->andWhere('i.createdAt <= :to')  ->setParameter('to',   new \DateTime($to)); }
+        $intern = (int) $qbIntern->getQuery()->getSingleScalarResult();
+
+        // 3) Gesta
+        $qbGesta = $em->createQueryBuilder()
+            ->select('COUNT(i.id)')
+            ->from(Invoice::class, 'i')
+            ->join('i.client','c')
+            ->where('c.type = :gesta')
+            ->setParameter('gesta','gesta');
+        if ($from) { $qbGesta->andWhere('i.createdAt >= :from')->setParameter('from', new \DateTime($from)); }
+        if ($to)   { $qbGesta->andWhere('i.createdAt <= :to')  ->setParameter('to',   new \DateTime($to)); }
+        $gesta = (int) $qbGesta->getQuery()->getSingleScalarResult();
+
+        // 4) Impayées
+        $qbUnpaid = $em->getRepository(Invoice::class)
+            ->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->where('i.status != :paid')
+            ->setParameter('paid','payé');
+        if ($from) { $qbUnpaid->andWhere('i.createdAt >= :from')->setParameter('from', new \DateTime($from)); }
+        if ($to)   { $qbUnpaid->andWhere('i.createdAt <= :to')  ->setParameter('to',   new \DateTime($to)); }
+        $unpaid = (int) $qbUnpaid->getQuery()->getSingleScalarResult();
+
+        // 5) Récentes (derniers 5 jours, statut impayé)
+        $since = new \DateTimeImmutable('-5 days');
+        $qbRecent = $em->getRepository(Invoice::class)
+            ->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->where('i.createdAt >= :since')
+            ->andWhere('i.status = :unpaid')
+            ->setParameter('since', $since)
+            ->setParameter('unpaid','impayé');
+        $recent = (int) $qbRecent->getQuery()->getSingleScalarResult();
+
+        return $this->json([
+            'total'  => $total,
+            'intern' => $intern,
+            'gesta'  => $gesta,
+            'unpaid' => $unpaid,
+            'recent' => $recent,
+        ]);
+    }
+
+
+    #[Route('/api/invoice/{id}/print', name: 'invoice_print', methods: ['GET'])]
+    public function print(Invoice $invoice): Response
+    {
+        $fmt = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        // on récupère le montant float
+        $amountFloat = (float) $invoice->getAmount();
+        // on fait la mise en forme
+        $amountInWords = ucfirst($fmt->format($amountFloat));
+
+        return $this->render('facture/print.html.twig', [
+            'invoice' => $invoice,
+            'amountInWords' => $amountInWords,
+        ]);
     }
 
     
@@ -92,7 +152,8 @@ final class FactureController extends AbstractController
                 'id'          => $inv->getId(),
                 'reference'   => $inv->getId(),
                 'companyName' => $inv->getClient()->getCompanyName(),
-                'clientType'  => $inv->getClientType(),
+                'clientType'  => $inv->getClient()->getType(),
+                'clientSolde' => $inv->getClient()->getBalance(),
                 'amount'      => $inv->getAmount(),
                 'remain'      => $inv->getRemain(),
                 'status'      => $inv->getStatus(),
@@ -145,7 +206,7 @@ final class FactureController extends AbstractController
         }
 
         $inv->setRemain($remain - $amount);
-        if ($inv->getRemain() === 0.0) {
+        if ((int)$inv->getRemain() === 0) {
             $inv->setStatus('payé');
         } else {
             $inv->setStatus('partiellement payé');
@@ -155,25 +216,27 @@ final class FactureController extends AbstractController
         $client = $inv->getClient();
         if ($useBalance) {
 
-             $lastTransaction = $em->getRepository(AccountTransaction::class)
+            $lastTransaction = $em->getRepository(AccountTransaction::class)
                 ->findOneBy(['client' => $client], ['id' => 'DESC']);
             $balance = $lastTransaction ? $lastTransaction->getBalanceValue() : 0;
 
             $newBalance = $balance - $amount;
 
             $ctx = new AccountTransaction();
-            $ctx->setInvoice($inv)  // présuppose relation Invoice dans Transaction
-            ->setIncome(0)
+            $ctx->setIncome(0)
             ->setOutcome($amount)
             ->setAccountType('client')
             ->setPaymentMethod('espèce')
-            ->setPaymentRef(uniqid('tx_', true))
+            ->setPaymentRef('')
             ->setReason('Débit solde client')
+            ->setUpdatedAt(new \DateTimeImmutable())
             ->setDescrib('Débit solde client pour paiement facture')
             ->setClient($client)
             ->setBalanceValue($newBalance)
             ->setCreatedAt(new \DateTimeImmutable())
+            ->setUser($this->getUser())
             ->setStatus('validé');
+            
             $em->persist($ctx);
         }
 
@@ -193,7 +256,7 @@ final class FactureController extends AbstractController
                 ->setAmount($amount * 10/100)
                 ->setCreatedAt(new \DateTimeImmutable())
                 ->setStatus('en attente');
-                
+
             $em->persist($com);
         }
 
@@ -204,6 +267,7 @@ final class FactureController extends AbstractController
            ->setOutcome(0)
            ->setAccountType('supplier')
            ->setReason('Paiement de facture')
+            ->setUpdatedAt(new \DateTimeImmutable())
             ->setDescrib('Paiement de facture #'.$inv->getRef())
             ->setBalanceValue($newBalance_supplier)
            ->setPaymentMethod($useBalance ? 'compte local' : $data['paymentMethod']) 
@@ -249,12 +313,12 @@ final class FactureController extends AbstractController
             return $this->json(['error'=>'Facture introuvable'],404);
         }
         $out = [];
-        foreach ($inv->getTransactions() as $tx) {
+        foreach ($inv->getAccountTransactions() as $tx) {
             $out[] = [
                 'date'             => $tx->getCreatedAt()->format('Y-m-d'),
-                'amount'           => $tx->getIncome(),
+                'amount' => $tx->getAccountType() === 'supplier' ? $tx->getIncome() : $tx->getOutcome(),
                 'paymentMethod'    => $tx->getPaymentMethod(),
-                'paymentReference' => $tx->getPaymentReference(),
+                'paymentReference' => $tx->getPaymentRef(),
             ];
         }
         return $this->json($out);

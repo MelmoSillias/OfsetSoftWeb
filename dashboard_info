@@ -1,0 +1,33 @@
+# Description de la page Dashboard
+
+La page Dashboard offre une vue d'ensemble moderne et interactive pour l'utilisateur, organisée en plusieurs sections principales :
+
+## 1. Profil de l'utilisateur
+- Présentation du profil avec un design moderne.
+- Utilisation d'icônes Bi (Bootstrap Icons) pour l'avatar, les informations de contact, et les paramètres.
+- Affichage du nom, du poste, et des informations clés de l'utilisateur.
+- Bouton d'accès rapide aux paramètres du profil.
+
+## 2. Section des tâches
+- Liste des tâches assignées à l'utilisateur.
+- Filtres dynamiques par période et par statut.
+- Par défaut, affichage des tâches "En cours" pour la période sélectionnée.
+- Statistiques liées à la période sélectionnée (nombre de tâches, progression, etc.).
+- Pour chaque tâche :
+    - Bouton "Voir" pour afficher les détails.
+    - Bouton "Terminer" pour marquer la tâche comme complétée.
+
+## 3. Section des dossiers
+- Affichage uniquement des dossiers attribués à l'utilisateur pour traitement.
+- Liste moderne avec informations principales (nom de l'entreprise, observations, date, statut).
+- lien vers le dossier 
+- Bouton "Traiter" pour chaque dossier :
+    - Ouvre un modal demandant les informations nécessaires au traitement.
+    - Validation et enregistrement des données saisies.
+
+## 4. Section Factures (si droits ouverts)
+- Affichage des factures récemment créées ou modifiées.
+- Liste concise avec numéro, client, montant, date de modification.
+- Accès rapide aux détails de chaque facture.
+
+L'ensemble de la page adopte une structure responsive et un design épuré, facilitant la navigation et la gestion des tâches quotidiennes de l'utilisateur.

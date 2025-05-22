@@ -30,9 +30,11 @@ class Commission
     #[ORM\Column(length: 20)]
     private ?string $status = null;
 
-    #[ORM\OneToOne(mappedBy: 'commission', cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\OneToOne(mappedBy: 'commission', cascade: ['persist', 'remove'])] 
     private ?AccountTransaction $accountTransaction = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    private ?string $penality = null;
 
     public function getId(): ?int
     {
@@ -117,6 +119,18 @@ class Commission
         }
 
         $this->accountTransaction = $accountTransaction;
+
+        return $this;
+    }
+
+    public function getPenality(): ?string
+    {
+        return $this->penality;
+    }
+
+    public function setPenality(?string $penality): static
+    {
+        $this->penality = $penality;
 
         return $this;
     }

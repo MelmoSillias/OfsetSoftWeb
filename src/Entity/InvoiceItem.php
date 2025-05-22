@@ -18,7 +18,7 @@ class InvoiceItem
     #[ORM\JoinColumn(nullable: false)]
     private ?Invoice $invoice = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 512)]
     private ?string $describ = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]

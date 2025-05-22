@@ -15,6 +15,11 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class UsersController extends AbstractController
 {
+    public function __construct(
+        private EntityManagerInterface $em
+    ) {}
+
+
     #[Route('/dashboard/users', name: 'app_users')]
     public function index(): Response
     {
@@ -54,7 +59,7 @@ final class UsersController extends AbstractController
             // 🔘 filtre actif
             if ($actif !== null && $user->isActif() !== $actif) {
                 continue;
-            }
+            } 
 
             $data[] = [
                 'id' => $user->getId(),
@@ -85,6 +90,8 @@ final class UsersController extends AbstractController
         $user->setRoles($data['roles']);
         $user->setIsActif($data['actif'] ?? true);
         $user->setPassword($hasher->hashPassword($user, $data['password']));
+        $user->setJobTitle($data['job']); 
+
 
         $em->persist($user);
         $em->flush();
@@ -108,5 +115,87 @@ final class UsersController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Utilisateur supprimé']);
+    }
+
+    #[Route('/api/users/{user}/permissions', name: 'permissions_read', methods: ['GET'])]
+    public function readPermissions(User $user): JsonResponse
+    {
+        $map = [
+          'dashboard'  => 'ROLE_DASHBOARD',
+          'sessions'   => 'ROLE_SESSIONS',
+          'dossiers'   => 'ROLE_DOSSIERS',
+          'archives'   => 'ROLE_ARCHIVES',
+          'factures'   => 'ROLE_FACTURES',
+          'clients'    => 'ROLE_CLIENTS',
+          'commissions'=> 'ROLE_COMMISSIONS',
+          'finance'    => 'ROLE_FINANCE',
+          'users'      => 'ROLE_USERS',
+        ];
+        $perms = [];
+        foreach ($map as $key => $role) {
+            if (in_array($role, $user->getRoles(), true)) {
+                $perms[] = $key;
+            }
+        }
+        return $this->json(['permissions' => $perms]);
+    }
+
+    // PUT pour mettre à jour
+    #[Route('/api/users/{user}/permissions', name: 'permissions_update', methods: ['PUT'])]
+    public function updatePermissions(Request $request, User $user): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $selected = $data['permissions'] ?? [];
+        $map = [
+          'dashboard'  => 'ROLE_DASHBOARD',
+          'sessions'   => 'ROLE_SESSIONS',
+          'dossiers'   => 'ROLE_DOSSIERS',
+          'archives'   => 'ROLE_ARCHIVES',
+          'factures'   => 'ROLE_FACTURES',
+          'clients'    => 'ROLE_CLIENTS',
+          'commissions'=> 'ROLE_COMMISSIONS',
+          'finance'    => 'ROLE_FINANCE',
+          'users'      => 'ROLE_USERS', 
+        ];
+        
+        $roles = [];
+        // Toujours récupérer le premier rôle actuel de l'utilisateur s'il existe
+        $currentRoles = $user->getRoles();
+        if (!empty($currentRoles)) {
+            $roles[] = $currentRoles[0];
+        }
+
+        foreach ($selected as $key) {
+            if (isset($map[$key])) {
+                $roles[] = $map[$key];
+            }
+        }
+
+        $user->setRoles(array_values(array_unique($roles)));
+        $this->em->flush();
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('api/user/theme', name:'theme_update', methods:['PUT'])]
+    public function updateTheme(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['error'=>'Non authentifié'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $theme = $data['theme'] ?? null;
+        if (!in_array($theme, ['light','dark'], true)) {
+            return $this->json(['error'=>'Theme invalide'], 400);
+        }
+
+        $user->setTheme($theme);
+        // since $user is already managed, persist() is optional, but harmless
+        $this->em->persist($user);
+        $this->em->flush();
+
+        return $this->json(['success'=>true,'theme'=>$user->getTheme()]);
     }
 }

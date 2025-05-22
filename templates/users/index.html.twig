@@ -67,21 +67,43 @@
           <div class="mb-3">
             <label for="fullname" class="form-label">Nom Complet</label>
             <input type="text" class="form-control" id="fullname" required>
-          </div>
+          </div> 
+          
           <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
-            <input type="password" class="form-control" id="password" required>
-          </div>
-          <div class="mb-3">
-            <label for="roles" class="form-label">Rôles</label>
-            <select class="form-select" id="roles" required>
-              <option value="">-- Sélectionnez --</option>
-              <option value="ROLE_ADMIN">Administrateur</option>
-              <option value="ROLE_GUICHET">Guichet</option>
-              <option value="ROLE_STOCK">Stock</option>
+            <label for="roles" class="form-label">Rôle</label>
+            <select class="form-select" id="roles" required> 
+              <option value="ROLE_USER">Utilisateur</option> 
+              <option value="ROLE_ADMIN">Admin</option>
             </select>
           </div>
-          <div class="form-check">
+          
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Mot de passe</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="password" required>
+              <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                const passwordInput = document.getElementById('password');
+                const toggleBtn = document.getElementById('togglePassword');
+                toggleBtn.addEventListener('click', function() {
+                  const type = passwordInput.type === 'password' ? 'text' : 'password';
+                  passwordInput.type = type;
+                  this.querySelector('i').classList.toggle('bi-eye');
+                  this.querySelector('i').classList.toggle('bi-eye-slash');
+                });
+              });
+            </script>
+          </div>
+          <div class="mb-3">
+            <label for="jobTitle" class="form-label">Poste</label>
+            <input type="text" class="form-control" id="jobTitle" required>
+          </div>
+          <div class="form-check d-none">
             <input class="form-check-input" type="checkbox" id="etat" checked>
             <label class="form-check-label" for="etat">Compte actif</label>
           </div>
@@ -110,25 +132,59 @@
   </div>
 </div>
 
-<div class="modal fade" id="modalUserRights" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
+<div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-body text-center">
-        <form id="formUserRights">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalAddUserLabel">Droits Utilisateurs</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-check">
-                    <label for="form-check-input" class="form-label">Factures</label>
-                    <input type="form-check-label" class="form-control" id="username">
-                </div> 
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Enregistrer</button>
-            </div>
-        </form>
-      </div>
+      <form id="permissionsForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="permissionsModalLabel">Droits d’accès</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="permUserId" name="userId">
+
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-dashboard" name="permissions[]" value="dashboard">
+            <label class="form-check-label" for="perm-dashboard">Tableau de bord</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-sessions" name="permissions[]" value="sessions">
+            <label class="form-check-label" for="perm-sessions">Taf</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-dossiers" name="permissions[]" value="dossiers">
+            <label class="form-check-label" for="perm-dossiers">Dossiers</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-archives" name="permissions[]" value="archives">
+            <label class="form-check-label" for="perm-archives">Archives</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-factures" name="permissions[]" value="factures">
+            <label class="form-check-label" for="perm-factures">Factures</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-clients" name="permissions[]" value="clients">
+            <label class="form-check-label" for="perm-clients">Clients</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-commissions" name="permissions[]" value="commissions">
+            <label class="form-check-label" for="perm-commissions">Commissions</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-finance" name="permissions[]" value="finance">
+            <label class="form-check-label" for="perm-finance">Finance</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="perm-users" name="permissions[]" value="users">
+            <label class="form-check-label" for="perm-users">Utilisateurs</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

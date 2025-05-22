@@ -2,6 +2,220 @@
 
 {% block title %}Tableau de bord{% endblock %}
 
-{% block main %} 
-    
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('assets/appcss/dashboard.css') }}">
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="{{ asset('assets/appjs/dashboard.js') }}"></script>
+{% endblock %}
+
+{% block main %}
+<div class="content-header">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <h1 class="h3">Tableau de bord</h1>
+    <button class="btn btn-outline-secondary" id="btnRefreshDash">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    {# 1. Profil utilisateur #}
+    {# templates/dashboard/index.html.twig #}
+
+<div class="card profile-container mb-4">
+  <div class="row g-0">
+    {# Colonne gauche : avatar + infos #}
+    <div class="col-md-4 text-center p-4 border-end bg-light">
+    {% if app.user is defined and app.user.avatarPath is defined and app.user.avatarPath %}
+        <img src="{{ asset(app.user.avatarPath) }}"
+             alt="Avatar"
+             class="profile-avatar mb-3">
+    {% else %}
+        <i class="bi bi-person-circle display-1 text-info mb-3"></i>
+    {% endif %}
+
+      <h4 class="mb-1">{{ app.user.fullName }}</h4>
+      <p class="text-muted mb-3">{{ app.user.jobTitle }}</p>
+
+      <div class="rating mb-3">
+        {% for i in 1..5 %}
+          <i class="bi bi-star-fill text-warning"></i>
+        {% endfor %}
+        <span class="rating-value">4.8</span>
+      </div>
+
+      <ul class="list-unstyled profile-contacts">
+        <li><i class="bi bi-envelope-fill me-2"></i> -- </li>
+        <li><i class="bi bi-telephone-fill me-2"></i> -- </li>
+      </ul>
+    </div>
+
+    {# Colonne droite : formulaire #}
+    {# Colonne droite : formulaire #}
+        <div class="col-md-8 p-4">
+        <h5 class="mb-4">Profil</h5>
+        <form id="profileForm">
+            <div class="row">
+            <div class="col-md-6 custom-field">
+                <label for="inpName" class="custom-field-label">Nom complet</label>
+                <hr class="custom-field-divider">
+                <input type="text"
+                    id="inpName"
+                    class="custom-input"
+                    value="{{ app.user.fullName }}">
+            </div>
+
+            <div class="col-md-6 custom-field">
+                <label for="inpJob" class="custom-field-label">Poste</label>
+                <hr class="custom-field-divider">
+                <input type="text"
+                    id="inpJob"
+                    class="custom-input"
+                    value="{{ app.user.jobTitle }}">
+            </div>
+
+            <div class="col-md-6 custom-field">
+                <label for="inpEmail" class="custom-field-label">Email</label>
+                <hr class="custom-field-divider">
+                <input type="email"
+                    id="inpEmail"
+                    class="custom-input"
+                    value=" -- ">
+            </div>
+
+            <div class="col-md-6 custom-field">
+                <label for="inpPhone" class="custom-field-label">Téléphone</label>
+                <hr class="custom-field-divider">
+                <input type="text"
+                    id="inpPhone"
+                    class="custom-input"
+                    value=" -- ">
+            </div>
+
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            </div>
+            </div>
+        </form>
+        </div>
+    </div>
+    </div>
+
+
+    {# 2. Section Tâches #}
+    <div class="card card-outline card-primary mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="bi bi-list-task me-2"></i>Mes tâches</h5>
+        <div class="d-flex gap-2">
+          <input type="text" id="filterTasksDate" class="form-control form-control-sm" placeholder="Période">
+          <select id="filterTasksStatus" class="form-select form-select-sm">
+            <option value="">Tous</option>
+            <option value="open">En cours</option>
+            <option value="waiting_validation">En attente</option>
+            <option value="validated">Validées</option>
+            <option value="rejected">Rejetées</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="row text-center stats-row p-3">
+          <div class="col"><strong id="tasksTotal">0</strong><br>Tâches</div>
+          <div class="col"><strong id="tasksOpen">0</strong><br>En cours</div>
+          <div class="col"><strong id="tasksDonePct">0%</strong><br>Complétées</div>
+        </div>
+        <ul class="list-group list-group-flush" id="tasksList">
+          <li class="list-group-item text-center text-muted">Aucune tâche à afficher</li>
+        </ul>
+      </div>
+    </div>
+
+    {# 3. Section Dossiers #}
+    <div class="card card-outline card-success mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="bi bi-folder2-open me-2"></i>Mes dossiers</h5>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush" id="foldersList">
+          <li class="list-group-item text-center text-muted">Aucun dossier assigné</li>
+        </ul>
+      </div>
+    </div>
+
+    {# 4. Section Factures (if allowed) #}
+    {% if is_granted('ROLE_ACCOUNTANT') %}
+    <div class="card card-outline card-warning mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="bi bi-receipt me-2"></i>Dernières factures</h5>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush" id="invoicesList">
+          <li class="list-group-item text-center text-muted">Aucune facture récente</li>
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+    {# 0. Modal Voir Tâche #}
+    <div class="modal fade" id="viewTaskModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Détail de la tâche</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+          <dt class="col-sm-3 text-primary"><i class="bi bi-card-heading"></i> Titre</dt>
+          <dd class="col-sm-9" id="viewTaskTitle">-</dd>
+
+          <dt class="col-sm-3 text-success"><i class="bi bi-person"></i> Assigné à</dt>
+          <dd class="col-sm-9" id="viewTaskAssignee">-</dd>
+
+          <dt class="col-sm-3 text-danger"><i class="bi bi-calendar"></i> Deadline</dt>
+          <dd class="col-sm-9" id="viewTaskDeadline">-</dd>
+
+          <dt class="col-sm-3 text-warning"><i class="bi bi-exclamation-triangle"></i> Urgence</dt>
+          <dd class="col-sm-9" id="viewTaskUrgency">-</dd>
+
+          <dt class="col-sm-3 text-info"><i class="bi bi-check-circle"></i> Statut</dt>
+          <dd class="col-sm-9" id="viewTaskStatus">-</dd>
+
+          <dt class="col-sm-3 text-secondary"><i class="bi bi-file-text"></i> Description</dt>
+          <dd class="col-sm-9" id="viewTaskDesc">-</dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="confirmCompleteTaskModal" data-id="" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Marquer terminée</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Cette tâche est-elle terminée ?</p>
+            <input type="hidden" id="completeTaskId">
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Non</button>
+            <button class="btn btn-success" id="confirmCompleteTaskBtn">Oui</button>
+          </div>
+        </div>
+      </div>
+    </div>
 {% endblock %}

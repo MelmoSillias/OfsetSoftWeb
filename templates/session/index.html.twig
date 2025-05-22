@@ -1,0 +1,110 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Sessions - Taf{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('assets/appcss/session-index.css') }}">
+{% endblock %}
+
+{% block main %}
+<div class="content-header">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <h1 class="m-0">Sessions - Taf</h1>
+    <button class="btn btn-primary" id="btnNewSession">
+      <i class="bi bi-plus-lg"></i> Nouvelle session
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="card card-outline card-secondary mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="searchName" class="form-label">Recherche</label>
+            <input type="text" id="searchName" class="form-control" placeholder="Nom de session">
+          </div>
+          <div class="col-md-4">
+            <label for="filterCreated" class="form-label">Période de création</label>
+            <div class="input-group">
+              <input type="text" id="filterCreated" class="form-control" placeholder="Sélectionnez la période">
+              <span class="input-group-text"><i class="bi bi-calendar2-range"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-outline card-primary">
+      <div class="card-body p-2 table-responsive">
+        <table id="session-table" class="table table-striped table-hover mb-0 table-bordered table-sm border-top border-bottom">
+          <thead>
+            <tr>
+              <th style="width: 5%">ID</th>
+              <th>Nom</th>
+              <th style="width: 15%">Créée le</th>
+              <th style="width: 10%"># Tâches</th>
+              <th style="width: 15%">Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Modal Création Session #}
+<div class="modal fade" id="createSessionModal" tabindex="-1" aria-labelledby="createSessionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSessionLabel">Nouvelle session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createSessionForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="sessionName" class="form-label">Nom de la session</label>
+                        <input type="text" class="form-control" id="sessionName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sessionDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="sessionDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="createSessionBtn">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# Modal Confirmation Suppression #}
+<div class="modal fade" id="confirmDeleteSessionModal" tabindex="-1" aria-labelledby="confirmDeleteSessionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteSessionLabel">Supprimer la session</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment supprimer cette session ?</p>
+        <input type="hidden" id="deleteSessionId">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-danger" id="confirmDeleteSessionBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascripts %} 
+  <script src="{{ asset('assets/appjs/session-index.js') }}"></script>
+{% endblock %}

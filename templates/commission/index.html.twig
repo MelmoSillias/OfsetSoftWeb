@@ -29,8 +29,11 @@
     <div class="col-md-3">
       <input type="text" id="filterCommittee" class="form-control" placeholder="Commissionnaire">
     </div>
-    <div class="col-md-4">
-      <input type="text" id="filterPeriod" class="form-control" placeholder="Période">
+    <div class="col-md-4"> 
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+        <input type="text" id="filterPeriod" class="form-control" placeholder="Période">
+      </div>
     </div>
     <div class="col-md-2 text-end">
       <button id="btnClearFilters" class="btn btn-sm btn-secondary">
@@ -42,15 +45,15 @@
   {# --- 3. Tableau des commissions --- #}
   <div class="card">
     <div class="card-body">
-      <table id="commissionsTable" class="table table-bordered table-hover">
+      <table id="commissionsTable" class="table table-bordered table-hover table-striped border-top border-bottom py-0 my-4">
         <thead>
           <tr>
             <th>ID</th>
             <th>Client</th>
             <th>Commissionnaire</th>
             <th>Montant</th>
-            <th>Pénalité</th>
-            <th>Date</th>
+            <th>Pénalité</th> 
+            <th>status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -69,23 +72,20 @@
     <div class="modal-content">
       <form id="form-take-commission">
         <div class="modal-header">
-          <h5 class="modal-title">Prendre la Commission</h5>
+          <h5 class="modal-title">Prise de la Commission</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="commissionId" name="commissionId">
           <div class="mb-3">
             <label>Montant à prélever</label>
-            <input type="number" name="amount" class="form-control" min="0" step="0.01" required>
+            <input type="number" name="amount" id="commissionAmount" class="form-control" min="0" step="0.01" readonly required>
           </div>
           <div class="mb-3">
-            <label>Pénalité (si applicable)</label>
-            <input type="number" name="penalty" class="form-control" min="0" step="0.01">
-          </div>
-          <div class="mb-3">
-            <label>Justification (optionnelle)</label>
-            <textarea name="reason" class="form-control" rows="2"></textarea>
-          </div>
+            <label>Pénalité (Optionnel)</label>
+            <input type="number" name="penality" class="form-control" min="0" step="0.01">
+          </div> 
+          
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>

@@ -33,7 +33,7 @@ final class ClientController extends AbstractController
     {
         // Récupération des champs
         $client->setCompanyName($request->request->get('companyName'))
-               ->setDelegate($request->request->get('delegate'))
+               ->setDelegate($request->request->get('delagate'))
                ->setPhoneNumber($request->request->get('phoneNumber'))
                ->setAddress($request->request->get('address'))
                ->setType($request->request->get('type'))
@@ -97,6 +97,7 @@ final class ClientController extends AbstractController
            ->setBalanceValue($new_balance_at)
            ->setOutcome(0)
            ->setAccountType('client')
+           ->setUpdatedAt(new \DateTimeImmutable())
            ->setReason('Versement compte client')
            ->setPaymentRef($ref_payment)
             ->setDescrib($note)
@@ -160,7 +161,7 @@ final class ClientController extends AbstractController
                ->setPhoneNumber($request->request->get('phoneNumber'))
                ->setAddress($request->request->get('address'))
                ->setType($request->request->get('type'))
-               ->setCommittee($request->request->get('committee'))
+               ->setCommittee($request->request->get('committee') ?? '')
                ->setISActive(true); 
         $em->persist($client);
         $em->flush();
@@ -395,6 +396,7 @@ final class ClientController extends AbstractController
                 ->setAmount($data['amount'])
                 ->setRemain($data['amount'])
                 ->setUser($this->getUser())
+                ->setRef('INV-' . (new \DateTimeImmutable($data['createdAt']))->format('YmdHis'))
                 ->setMonthStr($data['month_str'])
                 ->setStatus($data['status']);
 
@@ -428,9 +430,9 @@ final class ClientController extends AbstractController
             ->where('t.client = :client')
             ->setParameter('client', $client);
 
-        if ($type === 'entrée') {
+        if ($type === 'Entrée') {
             $qb->andWhere('t.income > 0');
-        } elseif ($type === 'sortie') {
+        } elseif ($type === 'Sortie') {
             $qb->andWhere('t.outcome > 0');
         }
 

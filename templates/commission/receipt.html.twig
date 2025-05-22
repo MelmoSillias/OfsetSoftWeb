@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Reçu Commission #{{ commission.id }}</title>
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}" media="all">
+  <link rel="stylesheet" href="{{ asset('AdminLte/css/adminlte.min.css') }}" media="all">
+  <style media="all">
+    body { margin:0; font-family:Arial,sans-serif; font-size:12px; color:#333; }
+    .page { width:210mm; min-height:297mm; padding:20mm; box-sizing:border-box; }
+    header { display:flex; justify-content:space-between; margin-bottom:20px; }
+    .logo { max-width:120px; }
+    .title-box { background:#d0f8f8; padding:8px 16px; text-align:right; }
+    .title-box h1 { margin:0; font-size:20px; }
+    .content { margin-top:10px; }
+    dl.row dt { width:30%; float:left; font-weight:bold; }
+    dl.row dd { width:68%; float:right; margin:0 0 8px 0; }
+    footer { position:absolute; bottom:20mm; left:20mm; right:20mm;
+             font-size:10px; text-align:center; border-top:1px solid #999;
+             padding-top:4px; }
+  </style>
+  <style media="print">
+    *, .title-box { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="page">
+    <header>
+      <img src="{{ absolute_url(asset('assets/img/logo.png')) }}" alt="OFSET Consult" class="logo">
+      <div class="title-box">
+        <h1>REÇU DE COMMISSION</h1>
+        <div><strong>Commission #</strong> {{ commission.id }}</div>
+        <div><strong>Date :</strong> {{ commission.takenAt|date('d / m / Y') }}</div>
+      </div>
+    </header>
+    <div class="content">
+      <dl class="row">
+        <dt>Commissionnaire</dt>
+        <dd>{{ commission.invoice.client.committee }}</dd>
+
+        <dt>Client</dt>
+        <dd>{{ commission.invoice.client.companyName }}</dd>
+
+        <dt>Référence facture</dt>
+        <dd>{{ commission.invoice.ref }}</dd>
+
+        <dt>Montant prélevé</dt>
+        <dd>{{ commission.amount|number_format(0, ',', ' ') }} F CFA</dd>
+
+        <dt>Pénalité</dt>
+        <dd>{{ commission.penality|default(0)|number_format(0, ',', ' ') }} F CFA</dd>
+
+        <dt>Date de prélèvement</dt>
+        <dd>{{ commission.takenAt|date('d / m / Y H:i') }}</dd>
+
+        <div style="display:flex; justify-content:space-between; margin-top:30px;">
+            <div style="border-top:1px solid #999; padding-top:8px; width:180px; text-align:center;">
+            Commissionnaire
+            </div>
+            <div style="border-top:1px solid #999; padding-top:8px; width:180px; text-align:center;">
+            Pour Acquis
+            </div>
+        </div>
+
+      </dl>
+    </div>
+    <footer>
+      SARL – Capital : 1.000.000 FCFA • RCCM : MA.BKO.2018.1827 • NINA : 31809196001902 • NIF : 086147294<br>
+      Compte : ML 147 0100402210910000547 • Tél : +223 77 80 94 17 • Email : ofsetconsult@gmail.com • Bamako<br>
+      République du Mali
+    </footer>
+  </div>
+</body>
+</html>

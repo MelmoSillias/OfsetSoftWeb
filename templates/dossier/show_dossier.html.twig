@@ -1,0 +1,277 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Dossier : {{ dossier.reference }}{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('assets/appcss/show_dossier.css') }}">
+  {# Dark-mode overrides via media query #}
+  <link rel="stylesheet" href="{{ asset('assets/appcss/show_dossier_dark.css') }}" media="(prefers-color-scheme: dark)">
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="{{ asset('assets/appjs/show_dossier.js') }}"></script>
+{% endblock %}
+
+{% block main %}
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">Dossier : {{ dossier.reference }}</h1>
+      <div class="btn-toolbar">
+        {# Received #}
+        {% if dossier.status == 'received' %}
+          <button class="btn btn-sm btn-primary me-1" id="btnEdit"><i class="bi bi-pencil"></i> Modifier</button>
+          <button class="btn btn-sm btn-warning me-1" id="btnChangeUrgency"><i class="bi bi-exclamation-circle"></i> Urgence</button>
+          <button class="btn btn-sm btn-info me-1"    id="btnAssign"><i class="bi bi-person-plus"></i> Affecter</button>
+          <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
+          <button class="btn btn-sm btn-danger me-1"  id="btnDelete"><i class="bi bi-trash"></i> Supprimer</button>
+
+        {# In Processing #}
+        {% elseif dossier.status == 'in_processing' %}
+          <button class="btn btn-sm btn-info me-1" id="btnReassign"><i class="bi bi-arrow-repeat"></i> Réaffecter</button>
+
+        {# Validated #}
+        {% elseif dossier.status == 'validated' %}
+          <button class="btn btn-sm btn-secondary me-1" id="btnArchive"><i class="bi bi-archive"></i> Archiver</button>
+
+        {# Archived #}
+        {% elseif dossier.status == 'archived' %}
+          <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
+        {% endif %}
+
+        {# Exports toujours visibles #}
+        <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportPdf"><i class="bi bi-file-earmark-pdf"></i></button>
+        <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportExcel"><i class="bi bi-file-earmark-excel"></i></button>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+
+    <!-- 1. HTML -->
+<div class="wf-container">
+  <div class="wf-step wf-step-1">
+    <div class="wf-icon"><i class="bi bi-inbox-fill"></i></div>
+    <div class="wf-label">Reçu</div>
+  </div>
+  <div class="wf-connector"></div>
+  <div class="wf-step wf-step-2">
+    <div class="wf-icon"><i class="bi bi-gear-fill"></i></div>
+    <div class="wf-label">En Traitement</div>
+  </div>
+  <div class="wf-connector"></div>
+  <div class="wf-step wf-step-3">
+    <div class="wf-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="wf-label">Validation</div>
+  </div>
+  <div class="wf-connector"></div>
+  <div class="wf-step wf-step-4">
+    <div class="wf-icon"><i class="bi bi-archive-fill"></i></div>
+    <div class="wf-label">Classé / Archivé</div>
+  </div>
+</div>
+
+
+    <div class="card card-outline card-primary">
+      <div class="card-body">
+        <ul class="nav nav-pills nav-justified mb-4" id="dossierTabs" role="tablist">
+          <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-resume">Résumé</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-documents">Documents</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-history">Historique</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-transfers">Transferts</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-archives">Archivages</a></li>
+        </ul>
+
+        <div class="tab-content" id="dossierTabsContent">
+          {# — Résumé — #}
+          <div class="tab-pane fade show active" id="tab-resume">
+            <div class="row gx-4 gy-3">
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-info"><i class="bi bi-hash"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Référence</span>
+                    <span class="info-box-number">{{ dossier.reference }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-secondary"><i class="bi bi-person-badge"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Expéditeur</span>
+                    <span class="info-box-number">{{ dossier.senderName }}{% if dossier.senderContact %} ({{ dossier.senderContact }}){% endif %}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-success"><i class="bi bi-calendar-check"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Date réception</span>
+                    <span class="info-box-number">{{ dossier.dateReception|date('Y-m-d') }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-warning"><i class="bi bi-truck"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Mode transmission</span>
+                    <span class="info-box-number">{{ dossier.modeTransmission }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-danger"><i class="bi bi-exclamation-lg"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Urgence</span>
+                    <span class="info-box-number text-capitalize">{{ dossier.urgency }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box">
+                  <span class="info-box-icon bg-primary"><i class="bi bi-people-fill"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Assigné à</span>
+                    <span class="info-box-number">{{ dossier.owner.fullName }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="card card-outline card-light">
+                  <div class="card-header"><h5 class="card-title">Observations générales</h5></div>
+                  <div class="card-body"><p>{{ dossier.generalObservations }}</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# — Documents — #}
+          <div class="tab-pane fade" id="tab-documents">
+            <table id="show-documents-table" class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Copies</th>
+                  <th>Pages</th>
+                  <th>Date</th>
+                  <th>Fichiers</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for doc in dossier.documents %}
+                <tr>
+                  <td>{{ doc.description }}</td>
+                  <td>{{ doc.numberOfCopies }}</td>
+                  <td>{{ doc.numberOfPages }}</td>
+                  <td>{{ doc.documentDate ? doc.documentDate|date('Y-m-d') : '—' }}</td>
+                  <td>
+                    {% for file in doc.attachedFiles %}
+                      <a href="{{ asset('uploads/documents/' ~ file) }}" target="_blank" class="me-1">
+                        <i class="bi bi-file-earmark-arrow-down"></i>
+                      </a>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-danger btn-remove-document" data-id="{{ doc.id }}">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {# — Historique — #}
+          <div class="tab-pane fade" id="tab-history">
+            <div class="timeline-container">
+  <div class="timeline-line"></div>
+  {% for pf in dossier.processingFiles %}
+    <div class="timeline-item">
+      <div class="timeline-icon bg-primary">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div class="timeline-content">
+        <h5 class="timeline-title">{{ pf.action|capitalize }}</h5>
+        <span class="timeline-time"><i class="bi bi-calendar-event"></i> {{ pf.processingDate|date('Y-m-d H:i') }}</span>
+        <p class="timeline-text">{{ pf.observations }}</p>
+        <small class="timeline-author">Par {{ pf.user.fullName }}</small>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-center text-muted">Aucun historique disponible.</p>
+  {% endfor %}
+</div>
+
+          </div>
+
+          {# — Transferts — #}
+          <div class="tab-pane fade" id="tab-transfers">
+            <table class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Destination</th>
+                  <th>Motif</th>
+                  <th>Responsable</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for tf in dossier.transferFiles %}
+                <tr>
+                  <td>{{ tf.tranferDate|date('Y-m-d') }}</td>
+                  <td>{{ tf.destination }}</td>
+                  <td>{{ tf.reason }}</td>
+                  <td>{{ tf.transferResponsible.fullName }}</td>
+                </tr>
+                {% else %}
+                  <tr><td colspan="4" class="text-center text-muted">Aucun transfert</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {# — Archivages — #}
+          <div class="tab-pane fade" id="tab-archives">
+            <table class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Bureau dépôt</th>
+                  <th>Archiviste</th>
+                  <th>Cote</th>
+                  <th>Commentaires</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ar in dossier.archivings %}
+                <tr>
+                  <td>{{ ar.archivingDate|date('Y-m-d') }}</td>
+                  <td>{{ ar.warehouseOffice }}</td>
+                  <td>{{ ar.archivist.fullName }}</td>
+                  <td>{{ ar.archivingCoordinate }}</td>
+                  <td>{{ ar.archivingNotes }}</td>
+                </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-muted">Aucun archivage</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

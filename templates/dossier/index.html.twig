@@ -1,0 +1,526 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Liste des dossiers{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  {# <link rel="stylesheet" href="{{ asset('assets/dossier/css/gestion-dossiers.css') }}"> #}
+{% endblock %}
+
+{% block main %}
+  {# — Filtres — #}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card card-outline card-secondary">
+        <div class="card-header">
+          <h3 class="card-title">Filtres</h3>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="filter-date" class="form-label">Période</label>
+              <div class="input-group">
+                <input type="text" id="filter-date" class="form-control" placeholder="Sélectionnez une période">
+                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label for="filter-urgency" class="form-label">Urgence</label>
+              <select id="filter-urgency" class="form-select">
+                <option value="">Toutes</option>
+                <option value="low">Faible</option>
+                <option value="medium">Moyenne</option>
+                <option value="high">Haute</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="filter-status" class="form-label">Statut</label>
+              <select id="filter-status" class="form-select">
+                <option value="">Tous</option>
+                <option value="received">Reçu</option>
+                <option value="in_processing">En traitement</option>
+                <option value="validated">Validé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Tableau des dossiers — #}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card card-outline card-primary"  style="min-height: 600px;">
+        <div class="card-header">
+          <h3 class="card-title">Liste des dossiers</h3>
+        </div>
+        <div class="card-body table-responsive">
+          <table id="dossier-table" class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Expéditeur</th>
+                <th>Date réception</th>
+                <th>Urgence</th>
+                <th>Assigné à</th>
+                <th>Statut</th>
+                <th style="width:160px">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Formulaire d’ajout de dossier — #}
+  <div class="card mb-3 card-outline card-info ">
+    <div class="card-header p-2">
+        <button
+            class="btn btn-outline-primary w-100 text-start d-flex justify-content-between align-items-center"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#formCollapse"
+            aria-expanded="false"
+            aria-controls="formCollapse"
+            id="btnShowForm"
+        >
+            <span>
+                <i class="bi bi-file-earmark-plus"></i>
+                Nouveau dossier
+            </span>
+        </button>
+    </div>
+    <div id="formCollapse" class="collapse">
+        <div class="card-body">
+            <form id="formAddDossier" enctype="multipart/form-data">
+                {# — Référence / Expéditeur / Contact Expéditeur #}
+  <div class="row g-3"> 
+    <div class="col-md-4">
+      <label for="senderName" class="form-label">Nom de l'entreprise</label>
+      <input type="text" name="senderName" id="senderName" class="form-control" required>
+    </div>
+    <div class="col-md-4">
+      <label for="sender" class="form-label">Expéditeur</label>
+      <input type="text" name="sender" id="sender" class="form-control">
+    </div> 
+    <div class="col-md-4">
+      <label for="senderContact" class="form-label">Contact expéditeur</label>
+      <input type="text" name="senderContact" id="senderContact" class="form-control">
+    </div>
+  </div>
+
+  {# — Date réception / Mode transmission / Urgence #}
+  <div class="row g-3 mt-3">
+    <div class="col-md-4">
+      <label for="dateReception" class="form-label">Date réception</label> 
+        <input type="date"
+               name="dateReception"
+               id="dateReception"
+               class="form-control"
+               data-target="#dateReception"
+               required>  
+    </div>
+    <div class="col-md-4">
+      <label for="modeTransmission" class="form-label">Mode de transmission</label>
+      <select name="modeTransmission" id="modeTransmission" class="form-select" required>
+        <option value="">Sélectionner</option>
+        <option value="courrier">Courrier</option>
+        <option value="email">E-mail</option>
+        <option value="fax">Fax</option>
+        <option value="livraison">Livraison</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="urgency" class="form-label">Urgence</label>
+      <select name="urgency" id="urgency" class="form-select" required>
+        <option value="">Sélectionner</option>
+        <option value="low">Faible</option>
+        <option value="medium">Moyenne</option>
+        <option value="high">Haute</option>
+      </select>
+    </div>
+
+  </div>
+
+  {# — Sender (champ string) / Destinataire principal / Assigned to #}
+  <div class="row g-3 mt-3">
+    <div class="col-md-4">
+      <label for="primaryRecipient" class="form-label">Destinataire principal</label>
+      <select name="primaryRecipient" id="primaryRecipient" class="form-select">
+        <option value="">Sélectionner</option>
+        {% for user in users %}
+          <option value="{{ user.id }}">{{ user.fullName }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {# — Statut / Observations générales #}
+  <div class="row g-3 mt-3">
+    <div class="col-md-12">
+      <label for="generalObservations" class="form-label">Observations générales</label>
+      <textarea name="generalObservations"
+                id="generalObservations"
+                class="form-control"
+                rows="2"></textarea>
+    </div>
+  </div>
+
+                <!-- Documents dynamiques -->
+                <div id="documents-wrapper" class="mt-4">
+                    <h5 class="mb-3">Documents joints</h5>
+                    <div class="card card-outline card-secondary">
+                        <div class="card-body">
+                            <div class="form-group document-item">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label>Description</label>
+                                        <input type="text" name="documents[0][description]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label>Copies</label>
+                                        <input type="number" name="documents[0][numberOfCopies]" class="form-control" min="1" required>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label>Pages</label>
+                                        <input type="number" name="documents[0][numberOfPages]" class="form-control" min="1" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Date doc.</label>
+                                        <input type="date" name="documents[0][documentDate]" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="row g-3 align-items-end mt-0">
+                                    <div class="col-md-6">
+                                        <label>Justificatifs</label>
+                                        <input type="text" name="documents[0][supportingDocuments]" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label>Fichiers</label>
+                                        <input type="file" name="documents[0][attachedFiles][]" class="form-control" multiple required>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 mt-2">
+                                    <label>Notes</label>
+                                    <textarea name="documents[0][notes]" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-12 text-end">
+                                    <button type="button" class="btn btn-sm btn-danger btn-remove-document">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" id="add-document-btn" class="btn btn-outline-primary">
+                            <i class="bi bi-plus"></i> Ajouter un document
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Enregistrer
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+  {# — Modals de gestion des actions — #}
+
+  {# 1. Modal Affectation #}
+  <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="assignModalLabel">Affecter le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAssignModal">
+            <input type="hidden" id="assignDossierId" name="dossierId">
+            <div class="mb-3">
+              <label for="assignOwner" class="form-label">Assigné à</label>
+              <select id="assignOwner" name="owner" class="form-select" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmAssignBtn">Valider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# 2. Modal Réaffectation #}
+  <div class="modal fade" id="reassignModal" tabindex="-1" aria-labelledby="reassignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reassignModalLabel">Réaffecter le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formReassignModal">
+            <input type="hidden" id="reassignDossierId" name="dossierId">
+            <div class="mb-3">
+              <label for="reassignOwner" class="form-label">Nouvel assigné</label>
+              <select id="reassignOwner" name="owner" class="form-select" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmReassignBtn">Valider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Modal Transfert complet — #}
+  <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="transferModalLabel">Transférer le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formTransferModal">
+            <input type="hidden" id="transferDossierId" name="dossierId">
+            
+            <div class="mb-3">
+              <label for="transferDestination" class="form-label">Destination</label>
+              <input type="text" class="form-control" id="transferDestination" name="destination" required>
+            </div>
+            <div class="mb-3">
+              <label for="transferMotif" class="form-label">Motif</label>
+              <textarea class="form-control" id="transferMotif" name="motif" rows="2"></textarea>
+            </div>
+            
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmTransferBtn">Transférer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Modal Archivage complet — #}
+  <div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="archiveModalLabel">Archiver le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formArchiveModal">
+            <input type="hidden" id="archiveDossierId" name="dossierId"> 
+            <div class="mb-3">
+              <label for="archiveBureau" class="form-label">Bureau de dépôt</label>
+              <input type="text" class="form-control" id="archiveBureau" name="bureauDepos" required>
+            </div>
+            <div class="mb-3">
+              <label for="archiveArchivist" class="form-label">Archiviste</label>
+              <select class="form-select" id="archiveArchivist" name="archivist" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="archiveCote" class="form-label">Cote</label>
+              <input type="text" class="form-control" id="archiveCote" name="cote" required>
+            </div>
+            <div class="mb-3">
+              <label for="archiveNotes" class="form-label">Commentaires</label>
+              <textarea class="form-control" id="archiveNotes" name="archivingNotes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmArchiveBtn">Archiver</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+{# — Modal Édition non critique — #}
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Modifier les informations du dossier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditModal">
+          <input type="hidden" id="editDossierId" name="dossierId">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="editReference" class="form-label">Référence</label>
+              <input type="text" id="editReference" name="reference" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label for="editSenderName" class="form-label">Nom expéditeur</label>
+              <input type="text" id="editSenderName" name="senderName" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label for="editSenderContact" class="form-label">Contact expéditeur</label>
+              <input type="text" id="editSenderContact" name="senderContact" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <label for="editDateReception" class="form-label">Date réception</label>
+                <input type="date"
+                   id="editDateReception"
+                   name="dateReception"
+                   class="form-control"
+                   required>
+            </div>
+            <div class="col-md-4">
+              <label for="editModeTransmission" class="form-label">Mode de transmission</label>
+              <select id="editModeTransmission" name="modeTransmission" class="form-select" required>
+                <option value="courrier">Courrier</option>
+                <option value="email">E-mail</option>
+                <option value="fax">Fax</option>
+                <option value="livraison">Livraison</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="editUrgency" class="form-label">Urgence</label>
+              <select id="editUrgency" name="urgency" class="form-select" required>
+                <option value="low">Faible</option>
+                <option value="medium">Moyenne</option>
+                <option value="high">Haute</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <label for="editSender" class="form-label">Expéditeur interne</label>
+              <input type="text" id="editSender" name="sender" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label for="editPrimaryRecipient" class="form-label">Destinataire principal</label>
+              <select id="editPrimaryRecipient" name="primaryRecipient" class="form-select">
+                <option value="">—</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="editOwner" class="form-label">Assigné à</label>
+              <select id="editOwner" name="owner" class="form-select" required>
+                <option value="">—</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-12">
+              <label for="editGeneralObservations" class="form-label">Observations générales</label>
+              <textarea id="editGeneralObservations"
+                        name="generalObservations"
+                        class="form-control"
+                        rows="3"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmEditBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Modal Changement d’urgence #}
+<div class="modal fade" id="urgencyModal" tabindex="-1" aria-labelledby="urgencyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="urgencyModalLabel">Changer le niveau d’urgence</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formUrgencyModal">
+          <input type="hidden" id="urgencyDossierId" name="dossierId">
+          <div class="mb-3">
+            <label for="newUrgency" class="form-label">Urgence</label>
+            <select id="newUrgency" name="urgency" class="form-select" required>
+              <option value="low">Faible</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmUrgencyBtn">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{# — Modal Confirmation Suppression — #}
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteLabel">Confirmer la suppression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment supprimer ce dossier ?</p>
+        <input type="hidden" id="deleteDossierId">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block javascripts %}
+  <script src="{{ asset('assets/appjs/gestion-dossiers.js') }}"></script>
+{% endblock %}

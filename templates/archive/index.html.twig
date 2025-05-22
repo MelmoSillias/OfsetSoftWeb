@@ -1,0 +1,137 @@
+{% extends 'appbase.html.twig' %}
+
+{% block title %}Archivages{% endblock %}
+
+{% block stylesheets %} 
+  <link rel="stylesheet" href="{{ asset('assets/appcss/archivage.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/appcss/archivage-dark.css') }}" media="(prefers-color-scheme: dark)">
+{% endblock %}
+
+{% block main %}
+<section class="content-header">
+  <div class="container-fluid">
+    <h1 class="mb-3">Archives</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+
+    {# ──────────────────────────────────────────────────────── #}
+    {# Filtres #}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card card-outline card-secondary">
+          <div class="card-header">
+            <h3 class="card-title">Filtres</h3>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="filter-date" class="form-label">Période</label>
+                <div class="input-group">
+                  <input type="text" id="filter-date" class="form-control" placeholder="Sélectionnez une période">
+                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label for="filter-archivist" class="form-label">Archiviste</label>
+                <select id="filter-archivist" class="form-select">
+                  <option value="">Tous</option>
+                  {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.fullName }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="filter-bureau" class="form-label">Bureau de dépôt</label>
+                <input type="text" id="filter-bureau" class="form-control" placeholder="Nom du bureau">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ──────────────────────────────────────────────────────── #}
+    {# Tableau des archivages #}
+    <div class="row">
+      <div class="col-12">
+        <div class="card card-outline card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Liste des archivages</h3>
+          </div>
+          <div class="card-body">
+            <table id="archive-table" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Date réception</th>
+                  <th>Date archivage</th>
+                  <th>Bureau dépôt</th>
+                  <th>Archiviste</th>
+                  <th>Cote</th>
+                  <th>Commentaires</th>
+                  <th style="width:140px">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ──────────────────────────────────────────────────────── #}
+    {# Modals #}
+
+    {# 1. Voir détails d’archivage #}
+    <div class="modal fade" id="viewArchiveModal" tabindex="-1" aria-labelledby="viewArchiveLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="viewArchiveLabel">Détail Archivage</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <dl class="row">
+              <dt class="col-sm-4">Référence</dt><dd class="col-sm-8" id="viewRef"></dd>
+              <dt class="col-sm-4">Date réception</dt><dd class="col-sm-8" id="viewDateRec"></dd>
+              <dt class="col-sm-4">Date archivage</dt><dd class="col-sm-8" id="viewDateArch"></dd>
+              <dt class="col-sm-4">Bureau dépôt</dt><dd class="col-sm-8" id="viewBureau"></dd>
+              <dt class="col-sm-4">Archiviste</dt><dd class="col-sm-8" id="viewArchivist"></dd>
+              <dt class="col-sm-4">Cote</dt><dd class="col-sm-8" id="viewCote"></dd>
+              <dt class="col-sm-4">Commentaires</dt><dd class="col-sm-8" id="viewNotes"></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# 2. Modal confirmation suppression #}
+    <div class="modal fade" id="confirmDeleteArchiveModal" tabindex="-1" aria-labelledby="confirmDeleteArchive" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmDeleteArchive">Supprimer Archivage</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Confirmez-vous la suppression ?</p>
+            <input type="hidden" id="deleteArchiveId">
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button class="btn btn-danger" id="confirmDeleteArchiveBtn">Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block javascripts %} 
+  <script src="{{ asset('assets/appjs/archivage.js') }}"></script>
+{% endblock %}

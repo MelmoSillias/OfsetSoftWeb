@@ -33,7 +33,7 @@ final class CommissionController extends AbstractController
             $qb->andWhere('cl.company_name LIKE :cn')->setParameter('cn', "%{$name}%");
         }
         if ($committee = $req->query->get('committee')) {
-            $qb->andWhere('cm.name LIKE :cm')->setParameter('cm', "%{$committee}%");
+            $qb->andWhere('cl.committee LIKE :cm')->setParameter('cm', "%{$committee}%");
         }
         if ($from = $req->query->get('from')) {
             $qb->andWhere('c.created_at >= :from')->setParameter('from', new \DateTime($from));
@@ -49,8 +49,10 @@ final class CommissionController extends AbstractController
                 'clientName'    => $c->getInvoice()->getClient()->getCompanyName(),
                 'committeeName' => $c->getInvoice()->getClient()->getCommittee(),
                 'amount'        => $c->getAmount(),
-                'penalty'       => $c->getPenalty(),
-                'date'          => $c->getCreateAt(),
+                'status' => $c->getStatus(),
+                'taken_at'      => $c->getTakenAt(),
+                'penality'       => $c->getPenality(),
+                'date'          => $c->getCreatedAt(),
             ];
         }
         return $this->json(['data' => $data]);
@@ -74,30 +76,43 @@ final class CommissionController extends AbstractController
         }
 
         $amount  = (float)$data['amount'];
-        $penalty = isset($data['penalty']) ? (float)$data['penalty'] : 0.0;
-        $reason  = $data['reason'] ?? null;
+        $penalty = isset($data['penality']) ? (float)$data['penality'] : 0.0; 
 
         // appliquer le prélèvement
         if ($amount > $commission->getAmount()) {
             return $this->json(['error' => 'Montant > commission'], 400);
-        }
-        $commission->setTakenAmount($amount);
-        $commission->setPenalty($penalty);
-        $commission->setReason($reason);
-        $commission->setTakenAt(new \DateTime());
+        } 
+        $commission->setPenality($penalty); 
+        $commission->setStatus('payé');
+        $commission->setTakenAt(new \DateTimeImmutable());
+
+        $repo = $em->getRepository(AccountTransaction::class);
+        $lastExpenseTx = $repo->findOneBy(
+            ['account_type' => 'expense'],
+            ['id' => 'DESC']
+        );
+        
+        $balance_expense = $lastExpenseTx ? $lastExpenseTx->getBalanceValue() : 0;
+        $newBalance_expense = $balance_expense - $amount;
 
         // enregistre une transaction liée à l'invoice
         $invoice = $commission->getInvoice();
         if ($invoice) {
             $tx = new AccountTransaction();
-            $tx->setClient($commission->getClient())
-               ->setInvoice($invoice)
-               ->setIncome($amount)
-               ->setOutcome(0)
-               ->setAccountType('expens')
-               ->setPaymentMethod('commission')
+            $tx->setOutcome($amount - $penalty) 
+                ->setIncome(0) 
+               ->setAccountType('expense')
+               ->setPaymentMethod('Espèces')
                ->setPaymentRef("Comm#{$commission->getId()}")
-               ->setCreatedAt(new \DateTimeImmutable());
+               ->setCreatedAt(new \DateTimeImmutable())
+               ->setUpdatedAt(new \DateTimeImmutable())
+               ->setBalanceValue($newBalance_expense)
+               ->setCommission($commission)
+               ->setDescrib('Prélèvement de la commission #'.$commission->getId())
+               ->setStatus('en attente')
+               ->setUser($this->getUser())
+               ->setReason("Prélèvement de la commission");
+            
             $em->persist($tx);
         }
 
@@ -119,21 +134,30 @@ final class CommissionController extends AbstractController
 
         $inv = $commission->getInvoice();
         $items = [];
-        foreach ($inv->getItems() as $it) {
+        foreach ($inv->getInvoiceItems() as $it) {
             $items[] = [
-                'description' => $it->getDescription(),
+                'description' => $it->getDescrib(),
                 'amount'      => $it->getAmount(),
                 'quantity'    => $it->getQuantity(),
             ];
         }
 
         return $this->json([
-            'reference' => $inv->getReference(),
+            'reference' => $inv->getRef(),
             'date'      => $inv->getCreatedAt()->format('Y-m-d'),
             'amount'    => $inv->getAmount(),
             'remain'    => $inv->getRemain(),
             'status'    => $inv->getStatus(),
             'items'     => $items,
+        ]);
+    }
+
+    #[Route('/commission/{id}/receipt', name: 'commission', methods: ['GET'])]
+    public function commissionReceipt(Commission $commission): Response
+    {
+
+        return $this->render('commission/receipt.html.twig', [
+            'commission' => $commission,
         ]);
     }
 }

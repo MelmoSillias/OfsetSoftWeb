@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Reçu Transaction #{{ transaction.id }}</title>
+  <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}" media="all">
+  <link rel="stylesheet" href="{{ asset('AdminLte/css/adminlte.min.css') }}" media="all">
+  <style media="all">
+    body { margin:0; font-family:Arial,sans-serif; font-size:12px; color:#333; }
+    .page { width:210mm; min-height:297mm; padding:20mm; box-sizing:border-box; }
+    header { display:flex; justify-content:space-between; margin-bottom:20px; }
+    .logo { max-width:200px; }
+    .title-box { background:#d0f8f8; padding:8px 16px; text-align:right; }
+    .title-box h1 { margin:0; font-size:20px; }
+    .content { margin-top:10px; }
+    dl.row dt { width:30%; float:left; font-weight:bold; }
+    dl.row dd { width:68%; float:right; margin:0 0 8px 0; }
+    footer { position:absolute; bottom:20mm; left:20mm; right:20mm;
+             font-size:10px; text-align:center; border-top:1px solid #999;
+             padding-top:4px; }
+  </style>
+  <style media="print">
+    *, .title-box { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="page">
+    <header>
+      <img src="{{ absolute_url(asset('assets/img/logo.png')) }}" alt="OFSET Consult" class="logo">
+      <div class="title-box">
+        <h1>REÇU DE TRANSACTION</h1>
+        <div><strong>Transaction #</strong> {{ transaction.id }}</div>
+        <div><strong>Date :</strong> {{ transaction.createdAt|date('d / m / Y') }}</div>
+      </div>
+    </header>
+    <div class="content">
+      <dl class="row">
+        <dt>Type de compte</dt>
+        <dd>
+          {% if transaction.accountType == 'supplier' %}
+            Approvisionnement
+          {% else %}
+            Dépense
+          {% endif %}
+        </dd> 
+
+        <dt>Entrée</dt>
+        <dd>{{ transaction.income|number_format(0, ',', ' ') }} F CFA</dd>
+
+        <dt>Sortie</dt>
+        <dd>{{ transaction.outcome|number_format(0, ',', ' ') }} F CFA</dd>
+
+        <dt>Solde</dt>
+        <dd>{{ transaction.balanceValue|number_format(0, ',', ' ') }} F CFA</dd>
+
+        <dt>Mode de paiement</dt>
+        <dd>{{ transaction.paymentMethod }}</dd>
+
+        <dt>Référence paie-ment</dt>
+        <dd>{{ transaction.paymentRef }}</dd>
+
+        <dt>Libellé</dt>
+        <dd>{{ transaction.describ }}</dd>
+
+        <dt>Motif</dt>
+        <dd>{{ transaction.reason ?: '—' }}</dd>
+      </dl>
+    </div>
+    <footer>
+      SARL – Capital : 1.000.000 FCFA • RCCM : MA.BKO.2018.1827 • NINA : 31809196001902 • NIF : 086147294<br>
+      Compte : ML 147 0100402210910000547 • Tél : +223 77 80 94 17 • Email : ofsetconsult@gmail.com • Bamako<br>
+      République du Mali
+    </footer>
+  </div>
+</body>
+</html>
