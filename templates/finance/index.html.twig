@@ -31,6 +31,11 @@
     </div>
   </div>
 
+  <div class="row mb-4" id="stats">
+        <div class="col-lg-6"><div class="small-box bg-success"><div class="inner"><h3 id="SoldeAppr">--</h3><p>Solde Approvisionnement</p></div><div class="icon"><i class="bi bi-safe"></i></div></div></div>
+        <div class="col-lg-6"><div class="small-box bg-primary"><div class="inner"><h3 id="SoldeDep">--</h3><p>Solde Depense</p></div><div class="icon"><i class="bi bi-piggy-bank"></i></div></div></div>
+  </div>
+
   {# --- Nav tabs pour Caisse Approvisionnement / Dépenses --- #}
   <ul class="nav nav-tabs mb-4" id="financesTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -90,7 +95,7 @@
                 <th>Sortie</th>
                 <th>Sortie</th>
                 <th>Solde</th>
-                <th>Réf. paiement</th>
+                <th>Motif</th>
                 <th>Statut</th>
                 <th>Actions</th>
               </tr>
@@ -108,10 +113,10 @@
         <div class="card-body">
           <form id="formAddSupplier">
             <div class="row g-3 align-items-end">
-              <div class="col-md-2">
-                <label for="supplierDate" class="form-label">Date</label>
-                <input type="date" id="supplierDate" name="createdAt" class="form-control" required>
-              </div>
+                <div class="col-md-2">
+                  <label for="supplierDate" class="form-label">Date et heure</label>
+                  <input type="datetime-local" id="supplierDate" name="createdAt" class="form-control" required>
+                </div>
               <div class="col-md-2">
                 <label for="supplierType" class="form-label">Type</label>
                 <select id="supplierType" name="transactionType" class="form-select" required>
@@ -197,7 +202,7 @@
                 <th>Sortie</th>
                 <th>Sortie</th>
                 <th>Solde</th>
-                <th>Réf.</th>
+                <th>Motif</th>
                 <th>Statut</th>
                 <th>Actions</th>
               </tr>
@@ -217,7 +222,7 @@
             <div class="row g-3 align-items-end">
               <div class="col-md-2">
                 <label for="expenseDate" class="form-label">Date</label>
-                <input type="date" id="expenseDate" name="createdAt" class="form-control" required>
+                <input type="datetime-local" id="expenseDate" name="createdAt" class="form-control" required>
               </div>
               <div class="col-md-2">
                 <label for="transactionType" class="form-label">Type</label>

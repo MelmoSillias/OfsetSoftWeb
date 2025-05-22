@@ -28,6 +28,21 @@ final class FinanceController extends AbstractController
     }
 
     /**
+     * GET /api/finances/soldes
+     * Retourne le solde actuel pour chaque type de compte
+     */
+    #[Route('/api/finances/soldes', name: 'finances_soldes', methods: ['GET'])]
+    public function soldes(EntityManagerInterface $em): JsonResponse
+    {
+        $types = ['supplier', 'expense'];
+        $balances = [];
+        foreach ($types as $type) {
+            $balances[$type] = $this->getLastBalance($type, $em);
+        }
+        return $this->json(['supplier' => $balances['supplier'], 'expense' => $balances['expense']]);
+    }
+
+    /**
      * GET /api/account-transactions
      * Query params: accountType, from, to, paymentMethod, status
      */
@@ -51,10 +66,10 @@ final class FinanceController extends AbstractController
         }
 
         $data = [];
-        foreach ($qb->orderBy('t.createdAt','DESC')->getQuery()->getResult() as $t) {
+        foreach ($qb->orderBy('t.id','DESC')->getQuery()->getResult() as $t) {
             $data[] = [
                 'id'            => $t->getId(),
-                'createdAt'     => $t->getCreatedAt()->format('Y-m-d'),
+                'createdAt'     => $t->getCreatedAt()->format('Y-m-d H:i'),
                 'income'        => $t->getIncome(),
                 'outcome'       => $t->getOutcome(),
                 'balanceValue'  => $t->getBalanceValue(),
@@ -186,8 +201,8 @@ final class FinanceController extends AbstractController
            ->setOutcome((string)$amount)
            ->setAccountType('supplier')
            ->setBalanceValue((string)$balSupNew)
-           ->setStatus('completed')
-           ->setPaymentMethod('transfer')
+           ->setStatus('validé')
+           ->setPaymentMethod('inter-compte')
            ->setPaymentRef('to-expense')
            ->setDescrib('Transfert vers dépenses')
            ->setReason($reason)
@@ -204,9 +219,9 @@ final class FinanceController extends AbstractController
            ->setOutcome('0')
            ->setAccountType('expense')
            ->setBalanceValue((string)$balExpNew)
-           ->setStatus('completed')
+           ->setStatus('validé')
            ->setPaymentMethod('transfer')
-           ->setPaymentRef('from-supplier')
+           ->setPaymentRef('TX' . (new \DateTime())->format('YmdHis'))
            ->setDescrib('Transfert depuis approvisionnement')
            ->setReason($reason)
            ->setUser($user);

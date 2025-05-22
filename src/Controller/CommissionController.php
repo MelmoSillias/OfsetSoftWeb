@@ -93,7 +93,7 @@ final class CommissionController extends AbstractController
         );
         
         $balance_expense = $lastExpenseTx ? $lastExpenseTx->getBalanceValue() : 0;
-        $newBalance_expense = $balance_expense - $amount;
+        $newBalance_expense = $balance_expense - $amount - $penalty;
 
         // enregistre une transaction liée à l'invoice
         $invoice = $commission->getInvoice();

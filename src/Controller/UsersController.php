@@ -80,13 +80,13 @@ final class UsersController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (empty($data['nom_utilisateur']) || empty($data['fullname']) || empty($data['password']) || empty($data['roles'])) {
+        if (empty($data['nom_utilisateur']) || empty($data['nom_complet']) || empty($data['password']) || empty($data['roles'])) {
             return $this->json(['error' => 'Champs obligatoires manquants.'], 400);
         }
 
         $user = new User();
         $user->setUsername($data['nom_utilisateur']); 
-        $user->setFullname($data['fullname'] ?? $data['nom_utilisateur']);
+        $user->setFullname($data['nom_complet'] ?? $data['nom_utilisateur']);
         $user->setRoles($data['roles']);
         $user->setIsActif($data['actif'] ?? true);
         $user->setPassword($hasher->hashPassword($user, $data['password']));

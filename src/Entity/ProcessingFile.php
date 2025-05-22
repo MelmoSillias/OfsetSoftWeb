@@ -31,6 +31,9 @@ class ProcessingFile
     #[ORM\Column(length: 10)]
     private ?string $action = null;
 
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $ProcessingNote = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -92,6 +95,18 @@ class ProcessingFile
     public function setAction(string $action): static
     {
         $this->action = $action;
+
+        return $this;
+    }
+
+    public function getProcessingNote(): ?string
+    {
+        return $this->ProcessingNote;
+    }
+
+    public function setProcessingNote(?string $ProcessingNote): static
+    {
+        $this->ProcessingNote = $ProcessingNote;
 
         return $this;
     }

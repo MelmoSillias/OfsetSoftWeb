@@ -273,6 +273,7 @@ final class FactureController extends AbstractController
            ->setPaymentMethod($useBalance ? 'compte local' : $data['paymentMethod']) 
            ->setPaymentRef($data['paymentReference'] ?? '')
            ->setStatus('en attente')
+           ->setUser($this->getUser()) 
            ->setCreatedAt(new \DateTimeImmutable());
         $em->persist($tx);
 

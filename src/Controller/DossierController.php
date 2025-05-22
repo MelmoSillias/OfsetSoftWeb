@@ -37,6 +37,10 @@ class DossierController extends AbstractController
             ->findBy(['file' => $dossier], ['processingDate' => 'ASC']);
         $transfers = $this->em->getRepository(TransferFile::class)
             ->findBy(['file' => $dossier], ['tranferDate' => 'ASC']);
+        
+        $lastInProcessing = $this->em->getRepository(ProcessingFile::class)
+            ->findOneBy(['file' => $dossier, 'action' => 'assign' || 'reassign' ], ['processingDate' => 'DESC']);
+
 
         return $this->render('dossier/show_dossier.html.twig', [
             'dossier'    => $dossier,
@@ -44,6 +48,7 @@ class DossierController extends AbstractController
             'history'    => $processing,
             'transfers'  => $transfers,
             'archivings' => [],
+
             'controller_name' => 'DossierController',
 
         ]);

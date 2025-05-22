@@ -19,32 +19,35 @@
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="h3 mb-0">Dossier : {{ dossier.reference }}</h1>
-      <div class="btn-toolbar">
-        {# Received #}
-        {% if dossier.status == 'received' %}
-          <button class="btn btn-sm btn-primary me-1" id="btnEdit"><i class="bi bi-pencil"></i> Modifier</button>
-          <button class="btn btn-sm btn-warning me-1" id="btnChangeUrgency"><i class="bi bi-exclamation-circle"></i> Urgence</button>
-          <button class="btn btn-sm btn-info me-1"    id="btnAssign"><i class="bi bi-person-plus"></i> Affecter</button>
-          <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
-          <button class="btn btn-sm btn-danger me-1"  id="btnDelete"><i class="bi bi-trash"></i> Supprimer</button>
+      {% if is_granted('ROLE_DOSSIERS') %}
+        <div class="btn-toolbar">
+          {# Received #}
+          {% if dossier.status == 'received' %}
+            <button class="btn btn-sm btn-primary me-1" id="btnEdit"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn btn-sm btn-warning me-1" id="btnChangeUrgency"><i class="bi bi-exclamation-circle"></i> Urgence</button>
+            <button class="btn btn-sm btn-info me-1"    id="btnAssign"><i class="bi bi-person-plus"></i> Affecter</button>
+            <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
+            <button class="btn btn-sm btn-danger me-1"  id="btnDelete"><i class="bi bi-trash"></i> Supprimer</button>
 
-        {# In Processing #}
-        {% elseif dossier.status == 'in_processing' %}
-          <button class="btn btn-sm btn-info me-1" id="btnReassign"><i class="bi bi-arrow-repeat"></i> Réaffecter</button>
+          {# In Processing #}
+          {% elseif dossier.status == 'in_processing' %}
+            <button class="btn btn-sm btn-info me-1" id="btnReassign"><i class="bi bi-arrow-repeat"></i> Réaffecter</button>
+            <button class="btn btn-sm btn-success me-1" id="btnValidate"><i class="bi bi-check-all"></i> Valider</button>
 
-        {# Validated #}
-        {% elseif dossier.status == 'validated' %}
-          <button class="btn btn-sm btn-secondary me-1" id="btnArchive"><i class="bi bi-archive"></i> Archiver</button>
+          {# Validated #}
+          {% elseif dossier.status == 'validated' %}
+            <button class="btn btn-sm btn-secondary me-1" id="btnArchive"><i class="bi bi-archive"></i> Archiver</button>
 
-        {# Archived #}
-        {% elseif dossier.status == 'archived' %}
-          <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
-        {% endif %}
+          {# Archived #}
+          {% elseif dossier.status == 'archived' %}
+            <button class="btn btn-sm btn-success me-1" id="btnTransfer"><i class="bi bi-upload"></i> Transférer</button>
+          {% endif %}
 
-        {# Exports toujours visibles #}
-        <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportPdf"><i class="bi bi-file-earmark-pdf"></i></button>
-        <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportExcel"><i class="bi bi-file-earmark-excel"></i></button>
-      </div>
+          {# Exports toujours visibles #}
+          <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportPdf"><i class="bi bi-file-earmark-pdf"></i></button>
+          <button class="btn btn-sm btn-outline-secondary me-1" id="btnExportExcel"><i class="bi bi-file-earmark-excel"></i></button>
+        </div>
+      {% endif %}
       </div>
     </div>
   </div>
@@ -84,7 +87,9 @@
           <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-documents">Documents</a></li>
           <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-history">Historique</a></li>
           <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-transfers">Transferts</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-archives">Archivages</a></li>
+          {% if dossier.owner.id == app.user.id || is_granted('ROLE_DOSSIERS') %}
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-archives">Traitement</a></li>
+          {% endif %}
         </ul>
 
         <div class="tab-content" id="dossierTabsContent">
@@ -241,33 +246,9 @@
             </table>
           </div>
 
-          {# — Archivages — #}
-          <div class="tab-pane fade" id="tab-archives">
-            <table class="table table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Bureau dépôt</th>
-                  <th>Archiviste</th>
-                  <th>Cote</th>
-                  <th>Commentaires</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for ar in dossier.archivings %}
-                <tr>
-                  <td>{{ ar.archivingDate|date('Y-m-d') }}</td>
-                  <td>{{ ar.warehouseOffice }}</td>
-                  <td>{{ ar.archivist.fullName }}</td>
-                  <td>{{ ar.archivingCoordinate }}</td>
-                  <td>{{ ar.archivingNotes }}</td>
-                </tr>
-                {% else %}
-                  <tr><td colspan="5" class="text-center text-muted">Aucun archivage</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+          {# — Traitement — #}
+          
+          
         </div>
       </div>
     </div>

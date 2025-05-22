@@ -223,12 +223,13 @@ class DossierApiController extends AbstractController
         $ownerId = json_decode($request->getContent(), true)['owner'] ?? null;
         $user = $this->em->find(User::class, $ownerId);
         $d->setOwner($user);
+        $d->setStatus('in_processing');
         $pf = (new ProcessingFile())
             ->setFile($d)
             ->setUser($user)
             ->setProcessingDate(new \DateTimeImmutable())
             ->setAction('reassign')
-            ->setObservations('Réaffectation');
+            ->setObservations('');
         $this->em->persist($pf);
         $this->em->flush();
         return $this->json(['success' => true]);
@@ -352,4 +353,46 @@ class DossierApiController extends AbstractController
 
         return $this->json(['success'=>true]);
     }
+
+    #[Route('/{id}/validate', name: 'validate', methods: ['POST'])]
+    public function validate(Request $request, CaseDocs $dossier): JsonResponse
+    {
+        $dossier->setStatus('validated');
+         $user = $this->getUser(); 
+        $dossier->setOwner($user);
+
+        $pf = (new ProcessingFile())
+            ->setFile($dossier)
+            ->setUser($user)
+            ->setProcessingDate(new \DateTimeImmutable())
+            ->setAction('validate')
+            ->setObservations("Dossier validé");
+        $this->em->persist($pf);
+
+        $this->em->flush();
+
+        return $this->json(['success'=>true]);
+    }
+
+    #[Route('/{id}/reject', name: 'reject', methods: ['POST'])]
+    public function reject(Request $request, CaseDocs $dossier): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $reason = $data['reason'] ?? 'Raison non spécifiée';
+
+        $dossier->setStatus('rejected');
+        $user = $this->getUser(); // ou technicien courant
+        $pf = (new ProcessingFile())
+            ->setFile($dossier)
+            ->setUser($user)
+            ->setProcessingDate(new \DateTimeImmutable())
+            ->setAction('reject')
+            ->setObservations("Dossier rejeté. Raison: $reason");
+        $this->em->persist($pf);
+
+        $this->em->flush();
+
+        return $this->json(['success'=>true]);
+    } 
+
 }
