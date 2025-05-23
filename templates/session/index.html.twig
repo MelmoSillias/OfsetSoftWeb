@@ -24,7 +24,7 @@
         <div class="row g-3">
           <div class="col-md-4">
             <label for="searchName" class="form-label">Recherche</label>
-            <input type="text" id="searchName" class="form-control" placeholder="Nom de session">
+            <input type="text" id="searchName" class="form-control" placeholder="Par description">
           </div>
           <div class="col-md-4">
             <label for="filterCreated" class="form-label">Période de création</label>
@@ -43,7 +43,7 @@
           <thead>
             <tr>
               <th style="width: 5%">ID</th>
-              <th>Nom</th>
+              <th>Description</th>
               <th style="width: 15%">Créée le</th>
               <th style="width: 10%"># Tâches</th>
               <th style="width: 15%">Actions</th>
@@ -67,12 +67,8 @@
             <form id="createSessionForm" autocomplete="off">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="sessionName" class="form-label">Nom de la session</label>
-                        <input type="text" class="form-control" id="sessionName" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="sessionDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="sessionDescription" name="description" rows="3"></textarea>
+                        <label for="sessionName" class="form-label">Description</label>
+                        <textarea class="form-control" id="sessionName" name="name" required rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -105,6 +101,6 @@
 </div>
 {% endblock %}
 
-{% block javascripts %} 
+{% block javascripts %}
   <script src="{{ asset('assets/appjs/session-index.js') }}"></script>
 {% endblock %}

@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CommissionController extends AbstractController
 {
-    #[Route('/commission', name: 'app_commission')]
+    #[Route('/dashboard/commission', name: 'app_commission')]
     public function index(): Response
     {
         return $this->render('commission/index.html.twig', [

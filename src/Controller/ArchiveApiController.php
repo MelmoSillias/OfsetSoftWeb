@@ -13,8 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/archives', name: 'api_archives_')]
 final class ArchiveApiController extends AbstractController
-{
-    
+{ 
     public function __construct(
         private EntityManagerInterface $em,
         private ArchivingRepository     $repo
@@ -24,7 +23,10 @@ final class ArchiveApiController extends AbstractController
     public function list(Request $request): JsonResponse
     {
         $qb = $this->repo->createQueryBuilder('a')
-            ->join('a.file', 'd')->addSelect('d');
+            ->join('a.file', 'd')
+            ->addSelect('d.reference')
+            ->addSelect('d.dateReception')
+            ->addSelect('d.id') ;
 
         if ($range = $request->query->get('dateRange')) {
             [$from, $to] = explode(' - ', $range);
@@ -52,16 +54,28 @@ final class ArchiveApiController extends AbstractController
             ->getQuery()
             ->getArrayResult();
 
-        $data = array_map(fn(array $r) => [
-            'id'             => $r['id'],
-            'reference'      => $r['d']['reference'],
-            'dateReception'  => (new \DateTimeImmutable($r['d']['dateReception']))->format('Y-m-d'),
-            'dateArchiving'  => $r['archivingDate']->format('Y-m-d'),
-            'bureauDepos'    => $r['warehouseOffice'],
-            'archivistName'  => $r['archivist_fullName'], // ajoutez cet alias en DQL si nécessaire
-            'cote'           => $r['archivingCoordinate'],
-            'archivingNotes' => $r['archivingNotes'],
-        ], $rows);
+
+        // $rows is an array of arrays, each with numeric and associative keys
+        $data = [];
+        foreach ($rows as $row) {
+            // The main data is in $row[0], and 'reference' and 'dateReception' are at the top level
+            $main = $row[0];
+            $data[] = [
+            'id'             => $main['id'],
+            'reference'      => $row['reference'] ?? '',
+            'dateReception'  => isset($row['dateReception']) && $row['dateReception'] instanceof \DateTimeInterface
+                ? $row['dateReception']->format('Y-m-d')
+                : '',
+            'dateArchiving'  => isset($main['archivingDate']) && $main['archivingDate'] instanceof \DateTimeInterface
+                ? $main['archivingDate']->format('Y-m-d')
+                : '',
+            'bureauDepos'    => $main['warehouseOffice'] ?? '',
+            'archivistName'  => '', // Not available in current query
+            'cote'           => $main['archivingCoordinate'] ?? '',
+            'archivingNotes' => $main['archivingNotes'] ?? '',
+            'docId'          => $row['id']
+            ];
+        }
 
         return $this->json([
             'draw'            => $draw,

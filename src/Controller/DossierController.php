@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/dossiers', name: 'app_dossier_')]
+#[Route('/dashboard/dossiers', name: 'app_dossier_')]
 class DossierController extends AbstractController
 {
     public function __construct(private EntityManagerInterface $em) {}
@@ -19,7 +19,10 @@ class DossierController extends AbstractController
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(): Response
     {
-        $users = $this->em->getRepository('App\Entity\User')->findAll();
+        
+        $all = $this->em->getRepository(\App\Entity\User::class)->findAll();
+        array_shift($all);  // retire le premier élément du tableau
+        $users = $all;
         // La page index est entièrement pilotée en JS (+ DataTable / AJAX)
         return $this->render('dossier/index.html.twig', [
             'controller_name' => 'DossierController',
@@ -39,18 +42,27 @@ class DossierController extends AbstractController
             ->findBy(['file' => $dossier], ['tranferDate' => 'ASC']);
         
         $lastInProcessing = $this->em->getRepository(ProcessingFile::class)
-            ->findOneBy(['file' => $dossier, 'action' => 'assign' || 'reassign' ], ['processingDate' => 'DESC']);
+            ->findOneBy(['file' => $dossier, 'action' => ['assign', 'reassign']], ['processingDate' => 'DESC']);
+         
+            
+             $users = $this->em->getRepository(\App\Entity\User::class)
+            ->createQueryBuilder('u')
+            ->where('u.id != :firstId')
+            ->setParameter('firstId', 1)
+            ->orderBy('u.id', 'ASC')
+            ->getQuery()
+            ->getResult();
 
-
+  
         return $this->render('dossier/show_dossier.html.twig', [
             'dossier'    => $dossier,
             'documents'  => $documents,
             'history'    => $processing,
             'transfers'  => $transfers,
-            'archivings' => [],
-
+            'archivings' => [], 
             'controller_name' => 'DossierController',
-
+            'lastInProcessing' => $lastInProcessing,
+            'users' => $users,
         ]);
     }
 

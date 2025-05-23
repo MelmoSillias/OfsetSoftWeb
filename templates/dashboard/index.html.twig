@@ -98,9 +98,20 @@
                     value=" -- ">
             </div>
 
-            <div class="col-12 mt-3">
-                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-            </div>
+            <div class="col-12 mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary">
+        Enregistrer les modifications
+    </button>
+    <button
+        type="button"
+        class="btn btn-outline-secondary"
+        data-bs-toggle="modal"
+        data-bs-target="#changePasswordModal"
+    >
+        Changer mot de passe
+    </button>
+</div>
+
             </div>
         </form>
         </div>
@@ -148,10 +159,10 @@
     </div>
 
     {# 4. Section Factures (if allowed) #}
-    {% if is_granted('ROLE_ACCOUNTANT') %}
+    {% if is_granted('ROLE_FACTURES') %}
     <div class="card card-outline card-warning mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0"><i class="bi bi-receipt me-2"></i>Dernières factures</h5>
+        <h5 class="card-title mb-0"><i class="bi bi-receipt me-2"></i>Factures récente</h5>
       </div>
       <div class="card-body p-0">
         <ul class="list-group list-group-flush" id="invoicesList">
@@ -218,4 +229,78 @@
         </div>
       </div>
     </div>
+
+    {# Modal Changer mot de passe #}
+<div
+  class="modal fade"
+  id="changePasswordModal"
+  tabindex="-1"
+  aria-labelledby="changePasswordModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="changePasswordForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="changePasswordModalLabel">
+            Changer mon mot de passe
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="oldPassword" class="form-label">Ancien mot de passe</label>
+            <input
+              type="password"
+              class="form-control"
+              id="oldPassword"
+              required
+            >
+          </div>
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+            <input
+              type="password"
+              class="form-control"
+              id="newPassword"
+              minlength="8"
+              required
+            >
+          </div>
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirmation</label>
+            <input
+              type="password"
+              class="form-control"
+              id="confirmPassword"
+              minlength="8"
+              required
+            >
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-success"
+            id="btnConfirmChangePassword"
+          >
+            Valider
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

@@ -7,10 +7,13 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Attribute\Route;   
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface; 
 
 
 final class UsersController extends AbstractController
@@ -41,8 +44,7 @@ final class UsersController extends AbstractController
         $users = $repo->findAll();
         $data = [];
 
-        foreach ($users as $user) {
-            // 🔍 filtre search (nom utilisateur ou email)
+        foreach ($users as $user) { 
             if ($search !== '') {
                 $s = strtolower($search);
                 if (!str_contains(strtolower($user->getNomUtilisateur()), $s) &&
@@ -50,13 +52,10 @@ final class UsersController extends AbstractController
                     continue;
                 }
             }
-
-            // 🔒 filtre role
+ 
             if ($role !== '' && !in_array($role, $user->getRoles())) {
                 continue;
-            }
-
-            // 🔘 filtre actif
+            } 
             if ($actif !== null && $user->isActif() !== $actif) {
                 continue;
             } 
@@ -72,9 +71,7 @@ final class UsersController extends AbstractController
 
         return $this->json(['data' => $data]);
     }
-
-
-
+ 
     #[Route('/api/users', name: 'api_users_create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher): JsonResponse
     {
@@ -92,6 +89,7 @@ final class UsersController extends AbstractController
         $user->setPassword($hasher->hashPassword($user, $data['password']));
         $user->setJobTitle($data['job']); 
 
+        $user->addRole('ROLE_DASHBOARD');
 
         $em->persist($user);
         $em->flush();

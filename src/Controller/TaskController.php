@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class TaskController extends AbstractController
 {
-    #[Route('/sessions/{session}/tasks', name:'app_sessions_tasks_index', methods:['GET'])]
+    #[Route('/dashboard/sessions/{session}/tasks', name:'app_sessions_tasks_index', methods:['GET'])]
     public function index(Session $session): Response
     {
         return $this->render('session/show.html.twig', ['session'=>$session,
@@ -113,12 +113,12 @@ final class TaskController extends AbstractController
              ->setDescription($data['description'] ?? '')
              ->setDeadline(new \DateTimeImmutable($data['deadline'] ?? 'now'))
              ->setUrgency($data['urgency'] ?? 'low')
-             ->setStatus($data['status'] ?? 'open')
+             ->setStatus('open')
              ->setCreatedAt(new \DateTimeImmutable());
 
 
-        if (!empty($data['assignee'])) {
-            $assignee = $this->em->getReference(User::class, (int)$data['assignee']);
+        if (!empty($data['assigneeId'])) {
+            $assignee = $this->em->getReference(User::class, (int)$data['assigneeId']);
             $task->setUser($assignee);
         }
 
@@ -176,7 +176,7 @@ final class TaskController extends AbstractController
         if (array_key_exists('assignee', $data)) {
             $task->setUser(
                 $data['assignee']
-                    ? $this->em->getReference(User::class, (int)$data['assignee'])
+                    ? $this->em->getReference(User::class, (int)$data['assigneeId'])
                     : null
             );
         }

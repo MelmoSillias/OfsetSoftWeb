@@ -61,7 +61,7 @@
           <div class="card-header">
             <h3 class="card-title">Liste des archivages</h3>
           </div>
-          <div class="card-body">
+          <div class="card-body table-responsive">
             <table id="archive-table" class="table table-bordered table-hover">
               <thead>
                 <tr>
@@ -103,6 +103,10 @@
               <dt class="col-sm-4">Cote</dt><dd class="col-sm-8" id="viewCote"></dd>
               <dt class="col-sm-4">Commentaires</dt><dd class="col-sm-8" id="viewNotes"></dd>
             </dl>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+              <button type="button" class="btn btn-primary" id="viewOriginalDossier">Ouvrir l'archive</button>
+            </div>
           </div>
         </div>
       </div>

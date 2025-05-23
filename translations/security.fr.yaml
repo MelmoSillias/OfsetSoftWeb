@@ -1,0 +1,6 @@
+# translations/security.fr.yaml
+
+Invalid credentials.: "Identifiants incorrects."
+The presented password is invalid.: "Le mot de passe est invalide."
+Username could not be found.: "Nom d’utilisateur introuvable."
+Invalid CSRF token.: "Jeton CSRF invalide."

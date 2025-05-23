@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class FinanceController extends AbstractController
 {
-    #[Route('/finance', name: 'app_finance')]
+    #[Route('/dashboard/finance', name: 'app_finance')]
     public function index(): Response
     {
         return $this->render('finance/index.html.twig', [

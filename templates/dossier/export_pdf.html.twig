@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bordereau d'exportation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            width: 150px;
+        }
+        .title {
+            color: #2F5496;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .main-info {
+            margin-bottom: 20px;
+        }
+        .main-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .main-info th, .main-info td {
+            border: 1px solid #D9D9D9;
+            padding: 8px;
+            vertical-align: top;
+        }
+        .main-info th {
+            background-color: #2F5496;
+            color: white;
+            font-weight: bold;
+        }
+        .documents-header {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+            padding: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .documents table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .documents th, .documents td {
+            border: 1px solid #D9D9D9;
+            padding: 8px;
+            vertical-align: top;
+        }
+        .documents th {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+        }
+        .signature {
+            margin-top: 20px;
+        }
+        .signature table {
+            width: 100%;
+        }
+        .signature td {
+            padding: 8px;
+        }
+        .signature-right {
+            text-align: right;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <img src="{{ absolute_url(asset('assets/img/logo.png')) }}" alt="Logo">
+    </div>
+    <div class="header">
+        <div class="title">BORDEREAU D'EXPORTATION</div>
+    </div>
+    <div class="main-info">
+        <table>
+            <tr>
+                <th>Référence</th>
+                <td>{{ dossier.reference }}</td>
+            </tr>
+            <tr>
+                <th>Expéditeur</th>
+                <td>{{ dossier.senderName }}</td>
+            </tr>
+            <tr>
+                <th>Date réception</th>
+                <td>{{ dossier.dateReception|date('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <th>Mode de transmission</th>
+                <td>{{ dossier.modeTransmission }}</td>
+            </tr>  
+        </table>
+    </div>
+    <div class="documents-header">DÉTAIL DES DOCUMENTS</div>
+    <div class="documents">
+        <table>
+            <tr>
+                <th>Description</th>
+                <th>Nombre de copies</th>
+                <th>Nombre de pages</th>
+                <th>Date du document</th>
+                <th>Documents à l'appui</th>
+                <th>Notes</th>
+            </tr>
+            {% for document in dossier.documents %}
+            <tr>
+                <td>{{ document.description }}</td>
+                <td>{{ document.numberOfCopies }}</td>
+                <td>{{ document.numberOfPages }}</td>
+                <td>{{ document.documentDate ? document.documentDate|date('d/m/Y') : 'N/A' }}</td>
+                <td>{{ document.supportingDocuments }}</td>
+                <td>{{ document.notes }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="signature">
+        <table>
+            <tr>
+                <td>Signature et cachet du service expéditeur :</td>
+                <td class="signature-right">Date d'exportation : {{ "now"|date('d/m/Y') }}</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

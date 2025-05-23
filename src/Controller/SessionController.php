@@ -10,7 +10,10 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final class SessionController extends AbstractController
 {
-    #[Route('/session', name: 'app_session')]
+
+    public function __construct(private EntityManagerInterface $em) {}
+
+    #[Route('/dashboard/session', name: 'app_session')]
     public function index(): Response
     {
 
@@ -18,13 +21,20 @@ final class SessionController extends AbstractController
             'controller_name' => 'SessionController',
         ]);
     }
-    #[Route('/session/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/dashboard/session/{id}', name: 'show', methods: ['GET'])]
     public function show(Session $session, EntityManagerInterface $em): Response
     {
         // Affiche la liste des tâches de la session
 
         // Example: fetch all users (replace 'User' with your actual User entity)
-        $users = $em->getRepository(\App\Entity\User::class)->findAll();
+       $users = $this->em->getRepository(\App\Entity\User::class)
+            ->createQueryBuilder('u')
+            ->where('u.id != :firstId')
+            ->setParameter('firstId', 1)
+            ->orderBy('u.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
 
         return $this->render('session/session-show.html.twig', [
             'session' => $session,
@@ -32,4 +42,6 @@ final class SessionController extends AbstractController
             'controller_name' => 'SessionController'
         ]); 
     }
+
+
 }

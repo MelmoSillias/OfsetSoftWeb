@@ -11,8 +11,13 @@ use App\Entity\User;
 use App\Repository\CaseDocsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
+use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,6 +62,9 @@ class DossierApiController extends AbstractController
                ->setParameter('from', new \DateTimeImmutable($from))
                ->setParameter('to',   new \DateTimeImmutable($to));
         }
+
+        $qb->andWhere('d.status != :archivedStatus')
+           ->setParameter('archivedStatus', "archived");
 
         $total           = $this->repo->count([]);
         $recordsFiltered = count($qb->getQuery()->getResult());
@@ -107,11 +115,8 @@ class DossierApiController extends AbstractController
         if ($id = $request->request->get('primaryRecipient')) {
             $user = $this->em->getRepository(User::class)->find($id);
             $d->setPrimaryRecipient($user);
-        }
-        if ($id = $request->request->get('owner')) {
-            $user = $this->em->getRepository(User::class)->find($id);
             $d->setOwner($user);
-        }
+        } 
 
         $this->em->persist($d);
         $this->em->flush(); // ID now available
@@ -229,10 +234,20 @@ class DossierApiController extends AbstractController
             ->setUser($user)
             ->setProcessingDate(new \DateTimeImmutable())
             ->setAction('reassign')
-            ->setObservations('');
+            ->setObservations('Réaffectation');
         $this->em->persist($pf);
         $this->em->flush();
         return $this->json(['success' => true]);
+    }
+
+    #[Route('/{id}/processing', name: 'processing', methods: ['POST'])]
+    public function processing(Request $request, ProcessingFile $pf): JsonResponse
+    { 
+        $pf->setProcessingNote($request->get('processingNotes') ?? ''); 
+
+        $this->em->flush();
+        return $this->json(['success' => true]);  
+
     }
 
     #[Route('/{id}/transfer', name: 'transfer', methods: ['POST'])]
@@ -241,9 +256,9 @@ class DossierApiController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $tf = (new TransferFile())
             ->setFile($d)
-            ->setTranferDate(new \DateTimeImmutable($data['date']))
-            ->setReason($data['motif'])
-            ->setTransferResponsible($this->em->find(User::class, $data['transferResponsible']));
+            ->setTranferDate(new \DateTimeImmutable())
+            ->setReason($data['motif']) 
+            ->setTransferResponsible($this->getUser());
         $this->em->persist($tf);
         // Log ProcessingFile for transfer :contentReference[oaicite:0]{index=0}
         $pf = (new ProcessingFile())
@@ -263,9 +278,9 @@ class DossierApiController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $ar = (new Archiving())
             ->setFile($d)
-            ->setArchivingDate(new \DateTimeImmutable($data['dateArchiving']))
+            ->setArchivingDate(new \DateTimeImmutable())
             ->setWarehouseOffice($data['bureauDepos'])
-            ->setArchivist($this->em->find(User::class, $data['archivist']))
+            ->setArchivist($this->getUser())
             ->setArchivingCoordinate($data['cote'])
             ->setArchivingNotes($data['archivingNotes'] ?? '');
         $this->em->persist($ar);
@@ -287,36 +302,244 @@ class DossierApiController extends AbstractController
     #[Route('/{id}/export/{format}', name: 'export', methods: ['GET'])]
     public function export(CaseDocs $d, string $format): Response
     {
-        if ($format === 'pdf') {
-            $html = $this->twig->render('dossier/export.html.twig', ['dossier' => $d]);
-            $dompdf = new Dompdf();
-            $dompdf->loadHtml($html);
-            $dompdf->render();
-            $pdf = $dompdf->output();
-            return new Response($pdf, 200, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="bordereau_'.$d->getReference().'.pdf"'
-            ]);
-        }
+       if ($format === 'pdf') {
+        $html = $this->twig->render('dossier/export_pdf.html.twig', ['dossier' => $d]);
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $pdf = $dompdf->output();
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="bordereau_' . $d->getReference() . '.pdf"'
+        ]);
+    }
 
         // Excel export
-        $spreadsheet = new Spreadsheet();
+       $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', 'Référence');
-        $sheet->setCellValue('B1', $d->getReference());
-        $sheet->setCellValue('A2', 'Expéditeur');
-        $sheet->setCellValue('B2', $d->getSenderName());
-        $sheet->setCellValue('A3', 'Date réception');
-        $sheet->setCellValue('B3', $d->getDateReception()->format('Y-m-d'));
-        // ... ajouter plus de champs si besoin
+
+        // Ajout du logo
+        $logo = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+        $logo->setPath($this->getParameter('kernel.project_dir') . '/public/assets/img/logo.png');
+        $logo->setCoordinates('E1');
+        $logo->setWorksheet($sheet);
+        $logo->setOffsetX(10);
+        $logo->setOffsetY(10);
+        $logo->setWidth(150); // Ajuster selon la taille du logo
+
+        // Style général
+        $defaultFont = [
+            'name' => 'Arial',
+            'size' => 10
+        ];
+        $spreadsheet->getDefaultStyle()->applyFromArray(['font' => $defaultFont]);
+
+        // Style pour le titre principal
+        $titleStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 14,
+                'color' => ['rgb' => '2F5496']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+            ]
+        ];
+
+        // Style pour les en-têtes de section
+        $sectionHeaderStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 12,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '2F5496']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            ]
+        ];
+
+        // Style pour les informations clés
+        $keyInfoStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => '1F3864']
+            ]
+        ];
+
+        // Style pour les bordures
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D9D9D9']
+                ]
+            ]
+        ];
+
+        // Décalage pour le logo
+        $startRow = 5;
+
+        // Entête principal
+        $sheet->mergeCells("A{$startRow}:F{$startRow}");
+        $sheet->setCellValue("A{$startRow}", 'BORDEREAU D\'EXPORTATION');
+        $sheet->getStyle("A{$startRow}")->applyFromArray($titleStyle);
+        $startRow++;
+
+        // Informations principales avec mise en forme tabulaire
+        $mainInfo = [
+            'Référence' => $d->getReference(),
+            'Expéditeur' => $d->getSenderName(),
+            'Date réception' => $d->getDateReception()->format('d/m/Y'),
+            'Mode de transmission' => $d->getModeTransmission(),
+            'Urgence' => $d->getUrgency(),
+            'Observations générales' => $d->getGeneralObservations()
+        ];
+
+        $currentRow = $startRow;
+        foreach ($mainInfo as $label => $value) {
+            $sheet->setCellValue("A{$currentRow}", $label)
+                ->setCellValue("B{$currentRow}", $value)
+                ->getStyle("A{$currentRow}")->applyFromArray($keyInfoStyle);
+            
+            $sheet->getStyle("A{$currentRow}:B{$currentRow}")->applyFromArray([
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP
+                ]
+            ]);
+            $currentRow++;
+        }
+
+        // Section des documents 
+
+// ... (avant : fusion du titre “DÉTAIL DES DOCUMENTS”)
+$currentRow += 2; 
+$documentsHeaderRow = $currentRow;
+$sheet->mergeCells("A{$documentsHeaderRow}:F{$documentsHeaderRow}");
+$sheet->setCellValue("A{$documentsHeaderRow}", 'DÉTAIL DES DOCUMENTS');
+$sheet->getStyle("A{$documentsHeaderRow}")->applyFromArray($sectionHeaderStyle);
+$currentRow++;
+
+// 1. En-têtes sur une seule ligne
+$columns = [
+    'Description'           => 40,
+    'Nombre de copies'      => 15,
+    'Nombre de pages'       => 15,
+    'Date du document'      => 18,
+    'Documents à l\'appui'  => 30,
+    'Notes'                 => 50,
+];
+$col = 'A';
+foreach ($columns as $header => $width) {
+    $sheet->setCellValue("{$col}{$currentRow}", $header);
+    $sheet->getColumnDimension($col)->setWidth($width);
+    $col++;  // passe à la colonne suivante (A → B → C → …)
+}
+// mise en forme des en-têtes
+$lastCol = chr(ord('A') + count($columns) - 1);
+$sheet
+    ->getStyle("A{$currentRow}:{$lastCol}{$currentRow}")
+    ->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+        'fill' => [
+            'fillType'    => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor'  => ['rgb' => '4472C4'],
+        ],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+    ]);
+$currentRow++;
+
+// 2. Données : chaque document sur sa propre ligne
+foreach ($d->getDocuments() as $document) {
+    $col = 'A';
+    // Description
+    $sheet->setCellValue("{$col}{$currentRow}", $document->getDescription());
+    $col++;
+    // Nombre de copies
+    $sheet->setCellValue("{$col}{$currentRow}", $document->getNumberOfCopies());
+    $col++;
+    // Nombre de pages
+    $sheet->setCellValue("{$col}{$currentRow}", $document->getNumberOfPages());
+    $col++;
+    // Date du document
+    $dateStr = $document->getDocumentDate()
+        ? $document->getDocumentDate()->format('d/m/Y')
+        : 'N/A';
+    $sheet->setCellValue("{$col}{$currentRow}", $dateStr);
+    $col++;
+    // Documents à l'appui
+    $sheet->setCellValue("{$col}{$currentRow}", $document->getSupportingDocuments());
+    $col++;
+    // Notes
+    $sheet->setCellValue("{$col}{$currentRow}", $document->getNotes());
+
+    // Alignement droite pour les nombres
+    $sheet
+        ->getStyle("B{$currentRow}:C{$currentRow}")
+        ->getAlignment()
+        ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+    // Ex. format conditionnel selon urgence du document
+    
+
+    $currentRow++;
+}
+
+// Déterminez la dernière colonne utilisée (ex. F si vous avez 6 colonnes)
+$lastCol = chr(ord('A') + count($columns) - 1);
+
+// Active l’auto-dimensionnement pour chaque colonne A → dernière
+foreach (range('A', $lastCol) as $colLetter) {
+    $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+}
+
+
+// 3. Bordures autour de tout le bloc
+$sheet
+    ->getStyle("A{$documentsHeaderRow}:F" . ($currentRow - 1))
+    ->applyFromArray($borderStyle);
+
+
+        // Section signature
+        $signatureRow = $currentRow + 2;
+        $sheet->mergeCells("A{$signatureRow}:B{$signatureRow}");
+        $sheet->setCellValue("A{$signatureRow}", 'Signature et cachet du service expéditeur :')
+            ->getStyle("A{$signatureRow}")->applyFromArray($keyInfoStyle);
+
+        $sheet->mergeCells("E{$signatureRow}:F{$signatureRow}");
+        $sheet->setCellValue("E{$signatureRow}", 'Date d\'exportation : ' . (new \DateTime())->format('d/m/Y'))
+            ->getStyle("E{$signatureRow}")->applyFromArray([
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+                'font' => ['italic' => true]
+            ]);
+
+        // Ajustement des hauteurs de ligne
+        $sheet->getRowDimension($startRow)->setRowHeight(25);
+        $sheet->getRowDimension($documentsHeaderRow)->setRowHeight(20);
+
+        // Protection des cellules
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getStyle("A{$startRow}:F{$signatureRow}")->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
 
         $writer = new Xlsx($spreadsheet);
-        $filename = 'bordereau_'.$d->getReference().'.xlsx';
+        $filename = 'bordereau_' . $d->getReference() . '.xlsx';
         $response = new StreamedResponse(function() use ($writer) {
             $writer->save('php://output');
         });
+
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response->headers->set('Content-Disposition', 'attachment;filename="'.$filename.'"');
+        $response->headers->set('Content-Disposition', 'attachment;filename="' . $filename . '"');
+
         return $response;
     }
 

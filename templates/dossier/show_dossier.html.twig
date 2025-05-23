@@ -1,5 +1,14 @@
 {% extends 'appbase.html.twig' %}
 
+{% set stepMap = {
+  'received': 1,
+  'in_processing': 2,
+  'validated': 3,
+  'archived':  4
+} %}
+{% set currentStep = stepMap[dossier.status]|default(1) %}
+
+
 {% block title %}Dossier : {{ dossier.reference }}{% endblock %}
 
 {% block stylesheets %}
@@ -15,6 +24,7 @@
 {% endblock %}
 
 {% block main %}
+<div id="dossier-data" class="d-none" data-id="{{ dossier.id }}"></div>
 <div class="content-header">
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -58,37 +68,52 @@
 
     <!-- 1. HTML -->
 <div class="wf-container">
-  <div class="wf-step wf-step-1">
+  <div class="wf-step wf-step-1
+              {% if currentStep >= 1 %}completed{% endif %}
+              {% if currentStep == 1 %}current{% endif %}">
     <div class="wf-icon"><i class="bi bi-inbox-fill"></i></div>
     <div class="wf-label">Reçu</div>
   </div>
-  <div class="wf-connector"></div>
-  <div class="wf-step wf-step-2">
+  <div class="wf-connector
+              {% if currentStep > 1 %}completed-connector{% endif %}"></div>
+
+  <div class="wf-step wf-step-2
+              {% if currentStep >= 2 %}completed{% endif %}
+              {% if currentStep == 2 %}current{% endif %}">
     <div class="wf-icon"><i class="bi bi-gear-fill"></i></div>
     <div class="wf-label">En Traitement</div>
   </div>
-  <div class="wf-connector"></div>
-  <div class="wf-step wf-step-3">
+  <div class="wf-connector
+              {% if currentStep > 2 %}completed-connector{% endif %}"></div>
+
+  <div class="wf-step wf-step-3
+              {% if currentStep >= 3 %}completed{% endif %}
+              {% if currentStep == 3 %}current{% endif %}">
     <div class="wf-icon"><i class="bi bi-check-circle-fill"></i></div>
     <div class="wf-label">Validation</div>
   </div>
-  <div class="wf-connector"></div>
-  <div class="wf-step wf-step-4">
+  <div class="wf-connector
+              {% if currentStep > 3 %}completed-connector{% endif %}"></div>
+
+  <div class="wf-step wf-step-4
+              {% if currentStep >= 4 %}completed{% endif %}
+              {% if currentStep == 4 %}current{% endif %}">
     <div class="wf-icon"><i class="bi bi-archive-fill"></i></div>
     <div class="wf-label">Classé / Archivé</div>
   </div>
 </div>
-
 
     <div class="card card-outline card-primary">
       <div class="card-body">
         <ul class="nav nav-pills nav-justified mb-4" id="dossierTabs" role="tablist">
           <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-resume">Résumé</a></li>
           <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-documents">Documents</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-history">Historique</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-transfers">Transferts</a></li>
-          {% if dossier.owner.id == app.user.id || is_granted('ROLE_DOSSIERS') %}
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-archives">Traitement</a></li>
+          {% if is_granted('ROLE_DOSSIERS') %}
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-history">Historique</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-transfers">Transferts</a></li>
+          {% endif %}
+          {% if dossier.owner.id == app.user.id or is_granted('ROLE_DOSSIERS') %}
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-processing">Traitement</a></li>
           {% endif %}
         </ul>
 
@@ -198,6 +223,7 @@
           </div>
 
           {# — Historique — #}
+          
           <div class="tab-pane fade" id="tab-history">
             <div class="timeline-container">
   <div class="timeline-line"></div>
@@ -225,17 +251,15 @@
             <table class="table table-bordered table-hover">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Destination</th>
+                  <th>Date</th> 
                   <th>Motif</th>
-                  <th>Responsable</th>
+                  <th>Responsable du transfert</th>
                 </tr>
               </thead>
               <tbody>
                 {% for tf in dossier.transferFiles %}
                 <tr>
-                  <td>{{ tf.tranferDate|date('Y-m-d') }}</td>
-                  <td>{{ tf.destination }}</td>
+                  <td>{{ tf.tranferDate|date('Y-m-d') }}</td> 
                   <td>{{ tf.reason }}</td>
                   <td>{{ tf.transferResponsible.fullName }}</td>
                 </tr>
@@ -247,12 +271,347 @@
           </div>
 
           {# — Traitement — #}
-          
-          
+          <div class="tab-pane fade" id="tab-processing">
+            <div class="card">
+              <div class="card-body">
+              {% if lastInProcessing != null %}
+                <form id="processingForm">
+                  <div class="row gx-4 gy-3">
+                    <label for="processingNotes" class="form-label">Notes de traitement</label>
+                    <textarea  class="form-control" rows="5" placeholder="Entrez vos observations" name="processingNotes" id="ProcessingNotes" {% if currentStep != 2 or lastInProcessing.user.id != app.user.id %}readonly{% endif %}>{{ lastInProcessing.ProcessingNote ? lastInProcessing.ProcessingNote : '' }}</textarea>
+                  </div>
+                  <div class="mt-4 text-end">
+                    
+                      {% if currentStep == 2 and lastInProcessing.user.id == app.user.id %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Enregistrer
+                            </button>
+                          </div>
+                      </form>
+                      {% endif %}
+                      {% if currentStep == 2 and is_granted('ROLE_DOSSIERS') %}
+                      </div>
+                      </form>
+                      <div class="my-4 text-end mx-4">
+                          <button id="btnValidate2" class="btn btn-success">
+                              <i class="bi bi-check-all"></i> Valider
+                          </button>
+                        </div>
+                      {% endif %}
+                    
+                  </div>
+                </form>
+                {% else %}
+                      <div class="my-2 alert alert-warning">Aucune attribution</div>
+                    {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
+  </div>
+</div>
+
+ <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="assignModalLabel">Affecter le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAssignModal">
+            <input type="hidden" id="assignDossierId" name="dossierId">
+            <div class="mb-3">
+              <label for="assignOwner" class="form-label">Assigné à</label>
+              <select id="assignOwner" name="owner" class="form-select" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmAssignBtn">Valider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# 2. Modal Réaffectation #}
+  <div class="modal fade" id="reassignModal" tabindex="-1" aria-labelledby="reassignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reassignModalLabel">Réaffecter le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formReassignModal">
+            <input type="hidden" id="reassignDossierId" name="dossierId">
+            <div class="mb-3">
+              <label for="reassignOwner" class="form-label">Nouvel assigné</label>
+              <select id="reassignOwner" name="owner" class="form-select" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmReassignBtn">Valider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Modal Transfert complet — #}
+  <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="transferModalLabel">Transférer le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formTransferModal">
+            <input type="hidden" id="transferDossierId" name="dossierId">
+            
+            {# <div class="mb-3">
+              <label for="transferDestination" class="form-label">Destination</label>
+              <input type="text" class="form-control" id="transferDestination" name="destination" required>
+            </div> #}
+            <div class="mb-3">
+              <label for="transferMotif" class="form-label">Motif</label>
+              <textarea class="form-control" id="transferMotif" name="motif" rows="3"></textarea>
+            </div>
+            
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmTransferBtn">Transférer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# — Modal Archivage complet — #}
+  <div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="archiveModalLabel">Archiver le dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formArchiveModal">
+            <input type="hidden" id="archiveDossierId" name="dossierId"> 
+            <div class="mb-3">
+              <label for="archiveBureau" class="form-label">Bureau de dépôt</label>
+              <input type="text" class="form-control" id="archiveBureau" name="bureauDepos" required>
+            </div>
+            <div class="mb-3">
+              <label for="archiveArchivist" class="form-label">Archiviste</label>
+              <select class="form-select" id="archiveArchivist" name="archivist" required>
+                <option value="">Sélectionner</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="archiveCote" class="form-label">Cote</label>
+              <input type="text" class="form-control" id="archiveCote" name="cote" required>
+            </div>
+            <div class="mb-3">
+              <label for="archiveNotes" class="form-label">Commentaires</label>
+              <textarea class="form-control" id="archiveNotes" name="archivingNotes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="confirmArchiveBtn">Archiver</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+{# — Modal Édition non critique — #}
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Modifier les informations du dossier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditModal">
+          <input type="hidden" id="editDossierId" name="dossierId">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="editReference" class="form-label">Référence</label>
+              <input type="text" id="editReference" name="reference" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label for="editSenderName" class="form-label">Nom expéditeur</label>
+              <input type="text" id="editSenderName" name="senderName" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label for="editSenderContact" class="form-label">Contact expéditeur</label>
+              <input type="text" id="editSenderContact" name="senderContact" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <label for="editDateReception" class="form-label">Date réception</label>
+                <input type="date"
+                   id="editDateReception"
+                   name="dateReception"
+                   class="form-control"
+                   required>
+            </div>
+            <div class="col-md-4">
+              <label for="editModeTransmission" class="form-label">Mode de transmission</label>
+              <select id="editModeTransmission" name="modeTransmission" class="form-select" required>
+                <option value="courrier">Courrier</option>
+                <option value="email">E-mail</option>
+                <option value="fax">Fax</option>
+                <option value="livraison">Livraison</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="editUrgency" class="form-label">Urgence</label>
+              <select id="editUrgency" name="urgency" class="form-select" required>
+                <option value="low">Faible</option>
+                <option value="medium">Moyenne</option>
+                <option value="high">Haute</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <label for="editSender" class="form-label">Expéditeur interne</label>
+              <input type="text" id="editSender" name="sender" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label for="editPrimaryRecipient" class="form-label">Destinataire principal</label>
+              <select id="editPrimaryRecipient" name="primaryRecipient" class="form-select">
+                <option value="">—</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="editOwner" class="form-label">Assigné à</label>
+              <select id="editOwner" name="owner" class="form-select" required>
+                <option value="">—</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.fullName }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-12">
+              <label for="editGeneralObservations" class="form-label">Observations générales</label>
+              <textarea id="editGeneralObservations"
+                        name="generalObservations"
+                        class="form-control"
+                        rows="3"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmEditBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Modal Changement d’urgence #}
+<div class="modal fade" id="urgencyModal" tabindex="-1" aria-labelledby="urgencyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="urgencyModalLabel">Changer le niveau d’urgence</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formUrgencyModal">
+          <input type="hidden" id="urgencyDossierId" name="dossierId">
+          <div class="mb-3">
+            <label for="newUrgency" class="form-label">Urgence</label>
+            <select id="newUrgency" name="urgency" class="form-select" required>
+              <option value="low">Faible</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmUrgencyBtn">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{# — Modal Confirmation Suppression — #}
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteLabel">Confirmer la suppression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment supprimer ce dossier ?</p>
+        <input type="hidden" id="deleteDossierId">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div> 
+
+{# — Modal Confirmation Validation — #}
+<div class="modal fade" id="confirmValidationModal" tabindex="-1" aria-labelledby="confirmValidateLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmValidateLabel">Confirmer la validation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment valider ce dossier&nbsp;?</p>
+        <input type="hidden" id="validateDossierId">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-success" id="confirmValidationBtn">Valider</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

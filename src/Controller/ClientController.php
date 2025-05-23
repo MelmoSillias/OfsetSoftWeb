@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ClientController extends AbstractController
 { 
 
-    #[Route('/client', name: 'app_client')]
+    #[Route('/dashboard/client', name: 'app_client')]
     public function index(): Response
     {
         return $this->render('client/index.html.twig', [
@@ -28,7 +28,7 @@ final class ClientController extends AbstractController
         ]);
     }
 
-    #[Route('/client/{id}/modify', name: 'client_modify_submit', methods: ['POST'])]
+    #[Route('/dashboard/client/{id}/modify', name: 'client_modify_submit', methods: ['POST'])]
     public function modifySubmit(Client $client, Request $request, EntityManagerInterface $em): JsonResponse
     {
         // Récupération des champs
@@ -43,7 +43,7 @@ final class ClientController extends AbstractController
         return $this->json(['success' => true]);
     }
 
-    #[Route('/client/{id}/details', name: 'client_details_modal', methods: ['GET'])]
+    #[Route('/dashboard/client/{id}/details', name: 'client_details_modal', methods: ['GET'])]
     public function ShowClient(Client $client): Response
     {
         // On peut récupérer ici factures ou transactions si besoin
@@ -71,7 +71,7 @@ final class ClientController extends AbstractController
         ]);
     }
 
-    #[Route('/client/{id}/accompte', name: 'client_accompte_submit', methods: ['POST'])]
+    #[Route('/dashboard/client/{id}/accompte', name: 'client_accompte_submit', methods: ['POST'])]
     public function accompteSubmit(Client $client, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $amount = (float) $request->request->get('amount', 0);

@@ -116,4 +116,28 @@ final class SessionApiController extends AbstractController
 
         return $this->json($counts);
     }
+
+    #[Route('/{id}/tasksbyuser', name: 'api_sessions_tasks_by_user', methods: ['GET'])]
+    public function tasksByUser(Session $session): JsonResponse
+    {
+        $byUser = [];
+        foreach ($session->getTasks() as $task) {
+            $assignee = $task->getUser();
+            $uid      = $assignee ? $assignee->getId() : 'unassigned';
+            $byUser[$uid][] = [
+                'id'            => $task->getId(),
+                'title'         => $task->getTitle(),
+                'description'   => $task->getDescription(),
+                'deadline'      => $task->getDeadline()?->format('Y-m-d'),
+                'urgency'       => $task->getUrgency(),
+                'status'        => $task->getStatus(),
+                'assigneeId'    => $assignee?->getId(),
+                'assigneeName'  => $assignee?->getFullName(),
+            ];
+        }
+
+        return $this->json([
+            'data' => $byUser
+        ]);
+    }
 }

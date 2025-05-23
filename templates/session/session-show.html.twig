@@ -8,12 +8,13 @@
 {% endblock %}
 
 {% block main %}
-<div class="content-header" id="sessionContainer" data-id="{{ session.id }}"> 
+<div id="sessionContainer" class='d-none' data-id="{{ session.id }}"></div>
+<div class="content-header" > 
   <div class="container-fluid d-flex justify-content-between align-items-center">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="{{ path('app_session') }}">Sessions</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ session.name }}</li>
+        <li class="breadcrumb-item active" aria-current="page">TAF N° {{ session.id }}</li>
       </ol>
     </nav>
     <div class="btn-group">
@@ -30,11 +31,11 @@
   </div>
       <div class="container-fluid mt-2">
         <div class="stats-overview">
-          <h2>{{ session.name }}</h2>
+          <h2>TAF N° {{ session.id }}</h2>
           <p>Créée le {{ session.createdAt|date('Y-m-d') }}</p>
           {# Optionally add more overall stats here #}
           <div class="row mb-4" id="sessionStats">
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-primary"><i class="bi bi-hash"></i></span>
             <div class="info-box-content">
@@ -43,7 +44,7 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-secondary"><i class="bi bi-hourglass"></i></span>
             <div class="info-box-content">
@@ -52,30 +53,30 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-warning"><i class="bi bi-exclamation-octagon"></i></span>
             <div class="info-box-content">
-          <span class="info-box-text text-dark">En attente de validation</span>
-          <span class="info-box-number text-dark">--</span>
+          <span class="info-box-text">En attente de validation</span>
+          <span class="info-box-number">--</span>
             </div>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-success"><i class="bi bi-x-circle"></i></span>
             <div class="info-box-content">
-          <span class="info-box-text text-dark dark-mode-text-white">Validées</span>
-          <span class="info-box-number text-dark dark-mode-text-white">--</span>
+          <span class="info-box-text">Validées</span>
+          <span class="info-box-number">--</span>
             </div>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <div class="info-box mb-3">
             <span class="info-box-icon bg-danger"><i class="bi bi-x-circle"></i></span>
             <div class="info-box-content">
-          <span class="info-box-text text-dark dark-mode-text-white">Réjétés</span>
-          <span class="info-box-number text-dark dark-mode-text-white">--</span>
+          <span class="info-box-text">Réjétés</span>
+          <span class="info-box-number">--</span>
             </div>
           </div>
         </div>
@@ -263,9 +264,9 @@
                     <option value="high">Haute</option>
                   </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 d-none">
                   <label for="taskStatus" class="form-label">Statut</label>
-                  <select id="taskStatus" name="status" class="form-select" required>
+                  <select id="taskStatus" name="status" class="form-select" >
                     <option value="open">Ouvert</option>
                     <option value="waiting_validation">En attente</option>
                     <option value="validated">Validé</option>
@@ -354,5 +355,12 @@
 {% endblock %}
 
 {% block javascripts %}
+  <script>
+    // Exporte en JS la liste simplifiée des utilisateurs
+    window.USERS_LIST = {{ users
+      |map(u => {'id': u.id, 'fullName': u.fullName})
+      |json_encode(constant('JSON_UNESCAPED_UNICODE'))
+      |raw }};
+  </script>
   <script src="{{ asset('assets/appjs/session-show.js') }}"></script>
 {% endblock %}

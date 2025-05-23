@@ -22,10 +22,9 @@ security:
                 enable_csrf: true
             logout:
                 path: app_logout
-            custom_authenticators:
-                - App\Security\LoginAuthenticator
-                # where to redirect after logout
-                # target: app_any_route
+            custom_authenticator: App\Security\LoginAuthenticator
+            entry_point: form_login
+            
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
